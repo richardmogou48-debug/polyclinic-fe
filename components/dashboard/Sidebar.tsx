@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { RoleConfig } from "@/lib/navigation";
+import { clearSession } from "@/lib/auth";
 
 export default function Sidebar({ config }: { config: RoleConfig }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    clearSession();
+    router.push("/login");
+  };
 
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-secondary-200/10 bg-secondary-950 text-neutral-50">
@@ -44,12 +51,13 @@ export default function Sidebar({ config }: { config: RoleConfig }) {
       </nav>
 
       <div className="border-t border-secondary-200/10 px-3 py-4">
-        <Link
-          href="/login"
-          className="block rounded-md px-3 py-2 text-sm text-neutral-400 transition-colors hover:bg-secondary-900 hover:text-accent-400"
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="block w-full rounded-md px-3 py-2 text-left text-sm text-neutral-400 transition-colors hover:bg-secondary-900 hover:text-accent-400"
         >
           Se déconnecter
-        </Link>
+        </button>
       </div>
     </aside>
   );

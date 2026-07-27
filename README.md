@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Polyclinique Fultang — Frontend
 
-## Getting Started
+Interface Next.js de la plateforme Polyclinique Fultang. Le backend (microservices Spring Boot)
+vit dans un depot separe et est joint via la Gateway.
 
-First, run the development server:
+## Demarrage
 
 ```bash
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+La Gateway doit tourner en parallele sur le port 9000 (`docker-compose up` cote backend), sinon
+la connexion echouera avec « Impossible de contacter le serveur ».
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuration
 
-## Learn More
+| Variable | Role |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | URL publique de la Gateway. Defaut : `http://localhost:9000`. |
 
-To learn more about Next.js, take a look at the following resources:
+La valeur est injectee dans le bundle **au moment du build** : la modifier sur Vercel impose un
+redeploiement, un simple redemarrage ne suffit pas.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Authentification
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`POST /user/login` sur la Gateway (route publique, exemptee du `TokenFilter`).
 
-## Deploy on Vercel
+- Requete : `{ "email": ..., "password": ... }`
+- Reponse 200 : le JWT **brut**, en `text/plain` — ce n'est pas du JSON.
+- Echec : HTTP **500** (et non 401) avec un corps `ErrorInfo` ; le backend mappe toutes les
+  `HmsException` sur `INTERNAL_SERVER_ERROR`. Le message doit donc etre lu dans le corps.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Le JWT porte les claims `id`, `email`, `role`, `name`, `profileId` et expire au bout de 5 h. La
+session est conservee dans le `localStorage` (cle `polyclinic.session`) et purgee a l'expiration.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Roles
+
+L'enum backend (`UserMS/dto/Roles.java`) ne definit que `PATIENT`, `ADMIN`, `DOCTOR` et
+`SECRETARY`. Les dashboards `nurse`, `pharmacist`, `hr`, `finance` et `quality` existent dans
+l'interface mais **aucun compte ne peut s'y connecter** tant que l'enum n'est pas etendue.
+
+Attention en l'etendant : `User.role` n'a pas `@Enumerated(STRING)` et se persiste par position
+ordinale — les nouvelles valeurs doivent etre ajoutees **en fin de liste**.
+
+## Deploiement
+
+Deploye sur Vercel depuis la branche `main`. Pour que le frontend en HTTPS puisse appeler la
+Gateway, celle-ci doit etre exposee :
+
+1. en HTTPS (une API en `http://` est bloquee par le navigateur depuis une page HTTPS) ;
+2. avec l'origine du frontend autorisee dans la config CORS de la Gateway
+   (`spring.cloud.gateway.server.webflux.globalcors...allowedOrigins`, qui n'accepte
+   aujourd'hui que `http://localhost:3000`).

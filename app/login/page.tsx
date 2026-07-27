@@ -2,10 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ApiError, login } from "@/lib/api";
 import { roleList } from "@/lib/navigation";
+import { dashboardPathFor, saveSession, sessionFromToken, SessionError } from "@/lib/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,12 +25,21 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
-    // TODO: brancher sur POST /user/login (Gateway) une fois l'API connectée.
-    // Pour l'instant, la connexion réelle n'est pas encore implémentée.
-    window.setTimeout(() => {
+
+    try {
+      const session = sessionFromToken(await login(email, password));
+      saveSession(session);
+      router.push(dashboardPathFor(session.role));
+    } catch (cause) {
+      // ApiError et SessionError portent deja un message affichable ; tout le reste
+      // est un bug inattendu qu'on ne veut pas exposer tel quel a l'utilisateur.
+      const isExpected = cause instanceof ApiError || cause instanceof SessionError;
+      setError(isExpected ? cause.message : "Une erreur inattendue est survenue.");
+      if (!isExpected) {
+        console.error(cause);
+      }
       setIsSubmitting(false);
-      setError("La connexion n'est pas encore branchée au serveur. Utilisez l'aperçu ci-dessous.");
-    }, 400);
+    }
   };
 
   return (
