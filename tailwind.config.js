@@ -82,22 +82,29 @@ module.exports = {
         },
 
         /* ────────────────────────────────────────────
-         * TERTIARY — Vert olive #727824
-         * Usage : accents secondaires, badges, éléments
-         *         de differenciation dans l'UI
+         * TERTIARY — Vert olive #8F9038
+         * Couleur du rameau d'olivier et de la devise
+         * "Santé pour tous / Health for all" du logo.
+         *
+         * Echantillonnee directement sur logo_polyclinic.png : c'est la teinte
+         * DOMINANTE du logo (~850 px contre ~484 px pour la sarcelle). L'ancienne
+         * valeur #727824 etait nettement plus sombre et plus brune que l'original.
+         *
+         * Usage : second pilier de la charte, a parite avec la sarcelle — pas un
+         *         simple accent decoratif.
          * ──────────────────────────────────────────── */
         tertiary: {
-          '50':  '#F6F7E9',
-          '100': '#EAECC9',
-          '200': '#D5D993',
-          '300': '#BAC15C',
-          '400': '#98A238',
-          '500': '#727824',  // ← Vert olive  (référence principale)
-          '600': '#5E631D',
-          '700': '#4A4E17',
-          '800': '#363811',
-          '900': '#23250B',
-          '950': '#131405',
+          '50':  '#F8F8EE',
+          '100': '#EFF0D6',
+          '200': '#DFE0AC',
+          '300': '#C9CB78',
+          '400': '#AEB050',
+          '500': '#8F9038',  // ← Vert olive du logo (mesuré)
+          '600': '#75762D',
+          '700': '#5A5B22',
+          '800': '#404118',
+          '900': '#26270E',
+          '950': '#141406',
         },
 
         /* ────────────────────────────────────────────
@@ -228,6 +235,10 @@ module.exports = {
         'dark-gradient':  'linear-gradient(180deg, #2C2C2C 0%, #041D1C 100%)',
         'silver-gradient':'linear-gradient(180deg, #F5F5F5 0%, #C8C8C8 100%)',
         'gold-line':      'linear-gradient(90deg, transparent 0%, #B8932A 50%, transparent 100%)',
+        // Filet reprenant les deux couleurs reellement presentes dans le logo :
+        // sarcelle (nom de l'etablissement) et vert olive (devise + rameau).
+        // Remplace gold-line, dont l'or provient de la charte AFB et non du logo.
+        'brand-line':     'linear-gradient(90deg, transparent 0%, #219084 25%, #8F9038 75%, transparent 100%)',
         'kente-stripe':   'repeating-linear-gradient(90deg, #C41E22 0px, #C41E22 8px, #B8932A 8px, #B8932A 16px, #2C2C2C 16px, #2C2C2C 24px, #F5F5F5 24px, #F5F5F5 32px)',
         'red-shine':      'linear-gradient(135deg, #C41E22 0%, #8B1A1C 100%)',
         'gold-shine':     'linear-gradient(135deg, #D4A017 0%, #B8932A 50%, #96751A 100%)',

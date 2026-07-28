@@ -60,7 +60,7 @@ export default function HeroCarousel({ children }: { children: ReactNode }) {
             aria-current={index === activeIndex}
             className={`h-1.5 rounded-full transition-all duration-350 ease-smooth ${
               index === activeIndex
-                ? "w-10 bg-gold-400"
+                ? "w-10 bg-tertiary-300"
                 : "w-4 bg-white/40 hover:bg-white/70"
             }`}
           />

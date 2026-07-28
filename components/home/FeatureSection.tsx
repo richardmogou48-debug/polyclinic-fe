@@ -42,7 +42,7 @@ export default function FeatureSection({
             {eyebrow}
           </p>
           <h2 className="mt-3 font-heading text-3xl font-semibold text-secondary-500">{title}</h2>
-          <div className="mt-4 h-0.5 w-16 rounded-full bg-gold-line" />
+          <div className="mt-4 h-0.5 w-16 rounded-full bg-brand-line" />
           <p className="mt-4 text-sm leading-relaxed text-neutral-600">{description}</p>
         </Reveal>
       </div>

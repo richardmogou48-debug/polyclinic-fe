@@ -100,7 +100,9 @@ export default function Home() {
       </header>
 
       <HeroCarousel>
-        <p className="font-ui text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">
+        {/* Cette devise est ecrite en vert olive dans le logo : elle reprend donc
+            sa couleur, eclaircie pour rester lisible sur les photos sombres. */}
+        <p className="font-ui text-xs font-semibold uppercase tracking-[0.2em] text-tertiary-300">
           Santé pour tous — Health for all
         </p>
         <h1 className="mx-auto mt-4 max-w-3xl font-heading text-4xl font-semibold text-white sm:text-5xl">
@@ -134,7 +136,7 @@ export default function Home() {
           <h2 className="mx-auto mt-3 max-w-2xl font-heading text-3xl font-semibold text-secondary-500">
             Tout ce dont vous avez besoin, réuni au même endroit
           </h2>
-          <div className="mx-auto mt-5 h-0.5 w-24 bg-gold-line" />
+          <div className="mx-auto mt-5 h-0.5 w-24 bg-brand-line" />
         </Reveal>
 
         {featuredServices.map((service, index) => (
@@ -156,8 +158,10 @@ export default function Home() {
                 // Le decalage suit la position dans la grille : les cartes se posent
                 // l'une apres l'autre au lieu d'apparaitre toutes d'un bloc.
                 <Reveal key={service.title} delay={(index % 3) * 90}>
-                  <div className="group h-full rounded-lg border border-neutral-200 bg-white p-6 shadow-card transition-all duration-350 ease-smooth hover:-translate-y-1 hover:border-primary-200 hover:shadow-gold">
-                    <div className="mb-4 h-1 w-10 rounded-full bg-tertiary-500 transition-all duration-350 ease-smooth group-hover:w-16 group-hover:bg-primary-500" />
+                  <div className="group h-full rounded-lg border border-neutral-200 bg-white p-6 shadow-card transition-all duration-350 ease-smooth hover:-translate-y-1 hover:border-tertiary-300 hover:shadow-card">
+                    {/* Le trait reste olive et s'allonge : la couleur dominante du logo
+                        doit rester visible, pas ceder la place a la sarcelle au survol. */}
+                    <div className="mb-4 h-1 w-10 rounded-full bg-tertiary-500 transition-all duration-350 ease-smooth group-hover:w-20" />
                     <h4 className="font-heading text-lg font-semibold text-secondary-500">{service.title}</h4>
                     <p className="mt-2 text-sm text-neutral-500">{service.description}</p>
                   </div>
@@ -193,10 +197,14 @@ export default function Home() {
               humain.
             </p>
             <div className="mt-8 grid gap-6 sm:grid-cols-2">
-              {reasons.map((reason) => (
+              {reasons.map((reason, index) => (
+                // Alternance sarcelle / olive : les deux couleurs du logo se repondent
+                // au lieu qu'une seule occupe tout l'espace.
                 <div
                   key={reason.title}
-                  className="border-l-2 border-neutral-200 pl-4 transition-colors duration-350 ease-smooth hover:border-primary-500"
+                  className={`border-l-2 border-neutral-200 pl-4 transition-colors duration-350 ease-smooth ${
+                    index % 2 === 0 ? "hover:border-primary-500" : "hover:border-tertiary-500"
+                  }`}
                 >
                   <h3 className="font-heading text-base font-semibold text-secondary-500">
                     {reason.title}
@@ -209,7 +217,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-dark-gradient px-6 py-16 text-center sm:px-10">
+      <section className="relative bg-dark-gradient px-6 py-16 text-center sm:px-10">
+        {/* Filet aux couleurs du logo en tete de bandeau : rappelle la charte au
+            moment ou l'on demande l'action principale. */}
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-brand-line" />
         <h2 className="font-heading text-2xl font-semibold text-white sm:text-3xl">
           Prêt à prendre rendez-vous ?
         </h2>
