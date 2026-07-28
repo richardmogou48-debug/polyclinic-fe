@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import FeatureSection from "@/components/home/FeatureSection";
 import HeroCarousel from "@/components/home/HeroCarousel";
+import Reveal from "@/components/home/Reveal";
 
 const featuredServices = [
   {
@@ -66,6 +67,12 @@ const navLinks = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
+      {/* Sans JavaScript, les blocs animes resteraient a opacite 0 : la page
+          apparaitrait vide. Cette regle les revele inconditionnellement. */}
+      <noscript>
+        <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+      </noscript>
+
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-4 sm:px-10">
         <div className="flex items-center gap-3">
           <Image src="/logo_polyclinic.png" alt="Polyclinique Fultang" width={44} height={44} className="rounded-full" />
@@ -120,14 +127,15 @@ export default function Home() {
       </HeroCarousel>
 
       <div id="services">
-        <div className="px-6 pt-20 text-center sm:px-10">
+        <Reveal className="px-6 pt-20 text-center sm:px-10">
           <p className="font-ui text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
             Nos services
           </p>
           <h2 className="mx-auto mt-3 max-w-2xl font-heading text-3xl font-semibold text-secondary-500">
             Tout ce dont vous avez besoin, réuni au même endroit
           </h2>
-        </div>
+          <div className="mx-auto mt-5 h-0.5 w-24 bg-gold-line" />
+        </Reveal>
 
         {featuredServices.map((service, index) => (
           <FeatureSection
@@ -144,15 +152,16 @@ export default function Home() {
               Et aussi
             </h3>
             <div className="mx-auto mt-8 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {moreServices.map((service) => (
-                <div
-                  key={service.title}
-                  className="rounded-lg border border-neutral-200 bg-white p-6 shadow-card transition-shadow hover:shadow-gold"
-                >
-                  <div className="mb-4 h-1 w-10 rounded-full bg-tertiary-500" />
-                  <h4 className="font-heading text-lg font-semibold text-secondary-500">{service.title}</h4>
-                  <p className="mt-2 text-sm text-neutral-500">{service.description}</p>
-                </div>
+              {moreServices.map((service, index) => (
+                // Le decalage suit la position dans la grille : les cartes se posent
+                // l'une apres l'autre au lieu d'apparaitre toutes d'un bloc.
+                <Reveal key={service.title} delay={(index % 3) * 90}>
+                  <div className="group h-full rounded-lg border border-neutral-200 bg-white p-6 shadow-card transition-all duration-350 ease-smooth hover:-translate-y-1 hover:border-primary-200 hover:shadow-gold">
+                    <div className="mb-4 h-1 w-10 rounded-full bg-tertiary-500 transition-all duration-350 ease-smooth group-hover:w-16 group-hover:bg-primary-500" />
+                    <h4 className="font-heading text-lg font-semibold text-secondary-500">{service.title}</h4>
+                    <p className="mt-2 text-sm text-neutral-500">{service.description}</p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -160,16 +169,17 @@ export default function Home() {
       </div>
 
       <section id="a-propos" className="bg-white px-6 py-20 sm:px-10">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-          <div className="relative h-72 w-full overflow-hidden rounded-lg shadow-modal lg:h-96">
+        <div className="group mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
+          <Reveal className="relative h-72 w-full overflow-hidden rounded-lg shadow-modal lg:h-96">
             <Image
               src="/polycinic.jpg"
               alt="Bâtiment de la Polyclinique Fultang"
               fill
-              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover transition-transform duration-700 ease-smooth group-hover:scale-105"
             />
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={120}>
             <p className="font-ui text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               À propos de nous
             </p>
@@ -184,7 +194,10 @@ export default function Home() {
             </p>
             <div className="mt-8 grid gap-6 sm:grid-cols-2">
               {reasons.map((reason) => (
-                <div key={reason.title}>
+                <div
+                  key={reason.title}
+                  className="border-l-2 border-neutral-200 pl-4 transition-colors duration-350 ease-smooth hover:border-primary-500"
+                >
                   <h3 className="font-heading text-base font-semibold text-secondary-500">
                     {reason.title}
                   </h3>
@@ -192,7 +205,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 

@@ -234,6 +234,11 @@ module.exports = {
         'card-light':     'linear-gradient(180deg, #FFFFFF 0%, #F5F5F5 100%)',
         'card-dark':      'linear-gradient(180deg, #2C2C2C 0%, #041D1C 100%)',
         'overlay-dark':   'linear-gradient(135deg, rgba(44,44,44,0.88) 0%, rgba(4,29,28,0.70) 50%, rgba(44,44,44,0.92) 100%)',
+        // Variante allegee pour le carrousel d'accueil : overlay-dark monte a 88-92 %
+        // d'opacite, ce qui rendait les photos du hero quasiment invisibles. Ici on
+        // descend a 45-78 % — assez pour garder le texte blanc lisible, assez peu pour
+        // que l'image se voie reellement.
+        'overlay-hero':   'linear-gradient(135deg, rgba(4,29,28,0.78) 0%, rgba(44,44,44,0.45) 45%, rgba(4,29,28,0.80) 100%)',
       },
 
       /* ────────────────────────────────────────────
@@ -242,10 +247,19 @@ module.exports = {
       keyframes: {
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
-        }
+        },
+        // Effet Ken Burns : lent zoom avant sur la photo active du carrousel. C'est ce
+        // qui donne l'impression que la page "respire" plutot que d'etre une image fixe.
+        kenburns: {
+          '0%':   { transform: 'scale(1) translate3d(0,0,0)' },
+          '100%': { transform: 'scale(1.09) translate3d(0,-1%,0)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 1.5s infinite',
+        // Duree volontairement superieure a l'intervalle du carrousel (5 s) : le zoom
+        // ne doit jamais atteindre sa fin ni se figer avant la transition suivante.
+        kenburns: 'kenburns 7s ease-out forwards',
       }
     },
   },
