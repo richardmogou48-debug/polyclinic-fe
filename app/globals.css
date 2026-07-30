@@ -6,8 +6,9 @@ body {
 }
 
 /* Accessibilite : si le systeme demande de reduire les animations, on neutralise les
-   apparitions au defilement et le zoom du carrousel. Traite en CSS plutot qu'en
-   JavaScript pour que le rendu serveur soit deja correct, sans etat intermediaire. */
+   apparitions au defilement, le zoom du carrousel et le balancement du rameau. Traite en
+   CSS plutot qu'en JavaScript pour que le rendu serveur soit deja correct, sans etat
+   intermediaire. */
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
     opacity: 1 !important;
@@ -16,6 +17,12 @@ body {
   }
 
   .animate-kenburns {
+    animation: none !important;
+  }
+
+  /* Le rameau se figera a sa position de repos, alignee sur le trou de la couche arriere :
+     l'oiseau reste donc intact, seul le mouvement disparait. */
+  .animate-balancement {
     animation: none !important;
   }
 }

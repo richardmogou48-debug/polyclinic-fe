@@ -265,12 +265,28 @@ module.exports = {
           '0%':   { transform: 'scale(1) translate3d(0,0,0)' },
           '100%': { transform: 'scale(1.09) translate3d(0,-1%,0)' },
         },
+        // Balancement du rameau que la colombe tient au bec. L'amplitude est volontairement
+        // minuscule : le pivot est au bec, donc les feuilles, tout au bout de la tige,
+        // parcourent deja plusieurs pixels a 2,5 degres. Au-dela le rameau se decroche
+        // visuellement du bec.
+        // Le cycle part et revient a 0 degre, et non a une extremite : 0 degre est la position
+        // vectorisee du rameau, donc celle ou il se raccorde exactement au trou de la couche
+        // arriere. Partir de -2,5 deg ferait sauter le rameau des la premiere image, et le
+        // figerait ailleurs qu'a sa place lorsque `prefers-reduced-motion` coupe l'animation.
+        balancement: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '25%':      { transform: 'rotate(2.5deg)' },
+          '75%':      { transform: 'rotate(-2.5deg)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 1.5s infinite',
         // Duree volontairement superieure a l'intervalle du carrousel (5 s) : le zoom
         // ne doit jamais atteindre sa fin ni se figer avant la transition suivante.
         kenburns: 'kenburns 7s ease-out forwards',
+        // Lent, et sur un cycle complet aller-retour : un balancement rapide sur une page
+        // de connexion attire l'oeil au lieu de l'accompagner.
+        balancement: 'balancement 7s ease-in-out infinite',
       }
     },
   },
