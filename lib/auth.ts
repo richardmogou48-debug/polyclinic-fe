@@ -4,14 +4,21 @@ import { roleConfigs, type Role } from "@/lib/navigation";
 
 const STORAGE_KEY = "polyclinic.session";
 
-// UserMS/dto/Roles.java ne definit que ces quatre valeurs. Les dashboards nurse, pharmacist,
-// hr, finance et quality existent cote frontend mais n'ont pas encore de role backend :
-// aucun compte ne peut donc s'y connecter tant que l'enum n'est pas etendue.
+// Correspondance avec UserMS/dto/Roles.java, dont les libelles du personnel sont alignes sur
+// ProfileMS/dto/StaffRole.java — d'ou HR_STAFF, FINANCE_STAFF et QUALITY_MANAGER plutot que les
+// noms courts utilises ici. Les neuf roles du frontend ont desormais tous un role backend ;
+// toute valeur absente de cette table fait echouer sessionFromToken plus bas, ce qui est
+// preferable a une redirection vers un espace arbitraire.
 const ROLE_BY_BACKEND_NAME: Record<string, Role> = {
   PATIENT: "patient",
   ADMIN: "admin",
   DOCTOR: "doctor",
   SECRETARY: "secretary",
+  NURSE: "nurse",
+  PHARMACIST: "pharmacist",
+  HR_STAFF: "hr",
+  FINANCE_STAFF: "finance",
+  QUALITY_MANAGER: "quality",
 };
 
 export type Session = {
