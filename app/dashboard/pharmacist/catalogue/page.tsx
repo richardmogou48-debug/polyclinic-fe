@@ -1,5 +1,5 @@
 import DashboardPageHeader from "@/components/dashboard/DashboardPageHeader";
-import PlaceholderSection from "@/components/dashboard/PlaceholderSection";
+import MedicinesSection from "@/components/dashboard/MedicinesSection";
 import { roleConfigs } from "@/lib/navigation";
 
 export default function Page() {
@@ -7,7 +7,7 @@ export default function Page() {
     <>
       <DashboardPageHeader title="Catalogue médicaments" roleLabel={roleConfigs.pharmacist.label} />
       <main className="flex-1 px-8 py-6">
-        <PlaceholderSection title="Catalogue médicaments" description="Médicaments référencés." />
+        <MedicinesSection />
       </main>
     </>
   );

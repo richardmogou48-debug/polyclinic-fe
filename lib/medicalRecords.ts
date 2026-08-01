@@ -112,6 +112,34 @@ export const fetchSurgeries = (patientId: number, token: string) =>
   apiGet<SurgeryRecord[]>(`/medicalrecord/patient/${patientId}/surgery`, token);
 
 /**
+ * Ordonnance vue hors du dossier : le backend y remonte le patient et le prescripteur, que
+ * l'entite Prescription ne porte pas (son lien vers la consultation est @JsonIgnore).
+ */
+export type PrescriptionView = {
+  id: number;
+  issueDate: string | null;
+  patientId: number | null;
+  doctorId: number | null;
+  consultationDate: string | null;
+  diagnosis: string | null;
+  items: PrescribedItem[] | null;
+};
+
+/**
+ * File de la pharmacie.
+ *
+ * ATTENTION : rend les ordonnances RECENTES, pas « celles a delivrer ». Prescription ne porte
+ * aucun etat de delivrance, la distinction n'existe pas en base. Ne pas presenter cette liste
+ * comme une file d'attente tant qu'un statut n'aura pas ete ajoute cote backend.
+ */
+export const fetchRecentPrescriptions = (token: string) =>
+  apiGet<PrescriptionView[]>("/medicalrecord/prescriptions", token);
+
+/** Ordonnances d'un patient donne. */
+export const fetchPrescriptionsByPatient = (patientId: number, token: string) =>
+  apiGet<PrescriptionView[]>(`/medicalrecord/patient/${patientId}/prescriptions`, token);
+
+/**
  * Formate un LocalDateTime Java. Renvoie la valeur brute si elle n'est pas analysable : mieux
  * vaut afficher une date etrange qu'un « Invalid Date » qui masque le probleme.
  */
