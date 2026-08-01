@@ -74,3 +74,20 @@ export const medicineTypeLabel = (v: string | null): string =>
  */
 export const fetchMedicines = (token: string) =>
   apiGet<Medicine[]>("/pharmacy/medicines/getAll", token);
+
+/** Ligne de stock : un lot d'un medicament, sa quantite et sa peremption. */
+export type InventoryLot = {
+  id: number;
+  medicineId: number | null;
+  medicineName: string | null;
+  dosage: string | null;
+  batchNo: string | null;
+  quantity: number | null;
+  /** LocalDate : « 2027-04-30 », sans heure. */
+  expiryDate: string | null;
+  addedDate: string | null;
+};
+
+/** Etat du stock, peremption la plus proche d'abord. Reserve a la pharmacie et a l'administration. */
+export const fetchInventory = (token: string) =>
+  apiGet<InventoryLot[]>("/pharmacy/medicines/inventory", token);

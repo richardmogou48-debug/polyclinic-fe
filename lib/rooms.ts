@@ -63,3 +63,18 @@ export const litOccupe = (lit: Bed): boolean => lit.occupied ?? lit.isOccupied ?
 
 /** Etat complet des chambres. Reserve au personnel soignant et a l'accueil. */
 export const fetchRooms = (token: string) => apiGet<Room[]>("/room", token);
+
+/** Sejour en cours : un patient, le lit qu'il occupe, depuis quand. */
+export type CurrentStay = {
+  historyId: number;
+  patientId: number | null;
+  bedId: number | null;
+  bedNumber: string | null;
+  roomNumber: string | null;
+  floorNumber: number | null;
+  categoryName: string | null;
+  admissionDate: string | null;
+};
+
+/** Patients actuellement hospitalises, l'admission la plus recente d'abord. */
+export const fetchCurrentStays = (token: string) => apiGet<CurrentStay[]>("/room/current-stays", token);
