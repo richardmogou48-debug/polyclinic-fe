@@ -64,6 +64,9 @@ export const roleConfigs: Record<Role, RoleConfig> = {
     basePath: "/dashboard/nurse",
     navItems: withBase("/dashboard/nurse", [
       { slug: "", label: "Vue d'ensemble", description: "Aperçu du service." },
+      // L'accueil est le premier geste du parcours : le patient arrive, l'infirmiere
+      // l'enregistre et prend ses parametres dans la meme saisie.
+      { slug: "accueil", label: "Accueil", description: "Enregistrer un patient et relever ses paramètres." },
       { slug: "patients", label: "Patients hospitalisés", description: "Suivi des patients par chambre/lit." },
       { slug: "chambres", label: "Chambres & lits", description: "État d'occupation des chambres." },
       { slug: "dossiers", label: "Dossiers médicaux", description: "Consultation des dossiers." },

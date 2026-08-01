@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import DirectorySection from "@/components/dashboard/DirectorySection";
-import PatientRegistrationForm from "@/components/dashboard/PatientRegistrationForm";
+import PatientIntakeForm from "@/components/dashboard/PatientIntakeForm";
 import Modal, { BoutonAction } from "@/components/form/Modal";
 
 /**
@@ -25,18 +25,15 @@ export default function PatientsWorkspace() {
         <h2 id="liste-patients" className="font-heading text-base font-semibold text-secondary-500">
           Patients enregistrés
         </h2>
-        <BoutonAction onClick={() => setOuverte(true)}>Enregistrer un patient</BoutonAction>
+        <BoutonAction onClick={() => setOuverte(true)}>Accueillir un patient</BoutonAction>
       </div>
 
       <section aria-labelledby="liste-patients">
         <DirectorySection annuaire="patients" cleRafraichissement={rafraichissements} />
       </section>
 
-      <Modal ouverte={ouverte} titre="Enregistrer un patient" onFermer={() => setOuverte(false)}>
-        <PatientRegistrationForm
-          dansModale
-          onEnregistre={() => setRafraichissements((n) => n + 1)}
-        />
+      <Modal ouverte={ouverte} titre="Accueil d'un patient" onFermer={() => setOuverte(false)}>
+        <PatientIntakeForm dansModale onEnregistre={() => setRafraichissements((n) => n + 1)} />
       </Modal>
     </>
   );
