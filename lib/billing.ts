@@ -4,7 +4,8 @@
 // precision du double cote navigateur : suffisant pour l'affichage, a ne jamais utiliser pour
 // recalculer un solde — c'est le backend qui fait foi (Invoice.getBalanceDue()).
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
+import type { Role } from "@/lib/navigation";
 
 export type InvoiceStatus = "DRAFT" | "UNPAID" | "PARTIALLY_PAID" | "PAID" | "CANCELLED";
 export type PaymentMethod = "CASH" | "CREDIT_CARD" | "MOBILE_MONEY" | "INSURANCE" | "BANK_TRANSFER";
@@ -104,3 +105,56 @@ export const fetchInvoicesByPatient = (patientId: number, token: string) =>
 /** Toutes les factures, filtrables par statut. Ferme au role PATIENT. */
 export const fetchInvoices = (token: string, status?: InvoiceStatus) =>
   apiGet<Invoice[]>(`/billing/invoice${status ? `?status=${status}` : ""}`, token);
+
+/**
+ * Roles autorises a ecrire en facturation, en miroir de BILLING_STAFF cote BillingAccessFilter.
+ *
+ * La finance en est absente alors qu'elle LIT tout : elle analyse, elle n'encaisse pas. C'est une
+ * separation deliberee cote backend, pas un oubli de cablage.
+ */
+const FACTURIERS: ReadonlySet<Role> = new Set<Role>(["admin", "secretary"]);
+
+export const peutFacturer = (role: Role): boolean => FACTURIERS.has(role);
+
+/** Ouvre une facture vide pour un patient. Les lignes s'ajoutent ensuite. */
+export const ouvrirFacture = (patientId: number, token: string) =>
+  apiSend<Invoice>(`/billing/invoice/patient/${patientId}`, token, {});
+
+export type NouvelleLigne = {
+  description: string;
+  unitPrice: number;
+  quantity: number;
+  /** Provenance de l'acte : « APPOINTMENT », « PHARMACY_MS »… Libre, non contraint par le backend. */
+  sourceService?: string | null;
+  sourceReferenceId?: number | null;
+};
+
+/**
+ * Ajoute une ligne. Le total de la ligne et celui de la facture sont recalcules par le backend :
+ * les envoyer d'ici laisserait deux verites possibles pour un montant.
+ */
+export const ajouterLigne = (invoiceId: number, ligne: NouvelleLigne, token: string) =>
+  apiSend<Invoice>(`/billing/invoice/${invoiceId}/item`, token, { corps: ligne });
+
+/**
+ * Enregistre la part prise en charge par l'assurance.
+ *
+ * Le montant part en parametre de requete, pas dans un corps : c'est la signature du backend
+ * (@RequestParam BigDecimal coverageAmount).
+ */
+export const appliquerAssurance = (invoiceId: number, montant: number, token: string) =>
+  apiSend<Invoice>(`/billing/invoice/${invoiceId}/insurance?coverageAmount=${montant}`, token, {});
+
+export type NouveauPaiement = {
+  amount: number;
+  paymentMethod: PaymentMethod;
+  referenceNumber?: string | null;
+  cashierName?: string | null;
+};
+
+/** Encaisse un paiement. Le statut de la facture est recalcule par le backend. */
+export const encaisser = (invoiceId: number, paiement: NouveauPaiement, token: string) =>
+  apiSend<Payment>(`/billing/invoice/${invoiceId}/payment`, token, { corps: paiement });
+
+/** Une facture reste vide tant qu'aucune ligne n'y figure : l'y ajouter est le geste suivant. */
+export const MOYENS_DE_PAIEMENT = Object.entries(MOYENS) as [PaymentMethod, string][];

@@ -1,13 +1,13 @@
 import DashboardPageHeader from "@/components/dashboard/DashboardPageHeader";
-import DirectorySection from "@/components/dashboard/DirectorySection";
+import StaffWorkspace from "@/components/dashboard/StaffWorkspace";
 import { roleConfigs } from "@/lib/navigation";
 
 export default function Page() {
   return (
     <>
       <DashboardPageHeader title="Personnel" roleLabel={roleConfigs.admin.label} />
-      <main className="flex-1 px-8 py-6">
-        <DirectorySection annuaire="personnel" />
+      <main className="flex flex-1 flex-col gap-6 px-8 py-6">
+        <StaffWorkspace />
       </main>
     </>
   );

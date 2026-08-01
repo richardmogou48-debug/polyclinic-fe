@@ -37,7 +37,13 @@ const pastille = (classe: string, texte: string) => (
 
 const NEUTRE = "bg-neutral-100 text-neutral-600";
 
-export default function QualitySection({ registre }: { registre: RegistreQualite }) {
+export default function QualitySection({
+  registre,
+  cleRafraichissement = 0,
+}: { registre: RegistreQualite;
+  /** Change de valeur pour forcer un rechargement apres une ecriture. */
+  cleRafraichissement?: number;
+}) {
   // Le parametre de type est explicite : sans lui, TypeScript infere une union de trois
   // Promise distinctes et refuse de l'unifier avec la signature du hook.
   const etat = useAuthenticatedResource<Complaint[] | IncidentReport[] | InternalAudit[]>(
@@ -46,7 +52,7 @@ export default function QualitySection({ registre }: { registre: RegistreQualite
       if (registre === "incident") return fetchIncidents(session.token);
       return fetchAudits(session.token);
     },
-    [registre]
+    [registre, cleRafraichissement]
   );
 
   if (etat.phase === "chargement") {

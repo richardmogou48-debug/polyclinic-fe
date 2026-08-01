@@ -1,6 +1,7 @@
 // Rendez-vous : appels et types, alignes sur Appointment/dto/AppointmentDetails.java.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
+import type { Role } from "@/lib/navigation";
 
 /**
  * Etats renvoyes par le backend (Appointment/dto/Status.java).
@@ -72,3 +73,67 @@ export function formatAppointmentTime(value: string | null): string {
     timeStyle: "short",
   }).format(date);
 }
+
+/**
+ * Roles autorises a planifier et modifier un rendez-vous, en miroir de SCHEDULING_STAFF cote
+ * AppointmentAccessFilter. Le patient en est absent : il n'ouvre pas son creneau lui-meme.
+ */
+const PLANIFICATEURS: ReadonlySet<Role> = new Set<Role>(["admin", "secretary", "doctor"]);
+
+export const peutPlanifier = (role: Role): boolean => PLANIFICATEURS.has(role);
+
+export type NouveauRendezVous = {
+  patientId: number;
+  doctorId: number;
+  /** LocalDateTime sans fuseau : « 2026-08-12T14:30:00 ». Le backend n'accepte pas de suffixe Z. */
+  appointmentTime: string;
+  reason?: string | null;
+  notes?: string | null;
+};
+
+/**
+ * Planifie un rendez-vous. Rend l'identifiant cree.
+ *
+ * Le statut n'est pas transmis : le backend pose SHEDULED. L'envoyer permettrait d'ouvrir un
+ * creneau deja marque confirme, sans que personne ne l'ait confirme.
+ */
+export const planifierRendezVous = (rdv: NouveauRendezVous, token: string) =>
+  apiSend<number>("/appointment/schedule", token, { corps: rdv });
+
+/**
+ * Deplace un rendez-vous.
+ *
+ * La date part en parametre de requete et non dans un corps : c'est la signature du backend
+ * (@RequestParam String newDateTime). Elle est encodee, le « + » d'un fuseau serait sinon lu
+ * comme une espace.
+ */
+export const reprogrammerRendezVous = (id: number, nouvelleDate: string, token: string) =>
+  apiSend<string>(
+    `/appointment/reschedule/${id}?newDateTime=${encodeURIComponent(nouvelleDate)}`,
+    token,
+    { methode: "PUT" }
+  );
+
+/**
+ * Transitions d'etat. Trois gestes distincts et non un champ « statut » modifiable : le backend
+ * refuse les passages incoherents, et offrir une liste deroulante laisserait croire que tous les
+ * etats sont atteignables depuis n'importe quel autre.
+ */
+export const confirmerRendezVous = (id: number, token: string) =>
+  apiSend<string>(`/appointment/confirm/${id}`, token, { methode: "PUT" });
+
+export const terminerRendezVous = (id: number, token: string) =>
+  apiSend<string>(`/appointment/complete/${id}`, token, { methode: "PUT" });
+
+export const annulerRendezVous = (id: number, token: string) =>
+  apiSend<string>(`/appointment/cancel/${id}`, token, { methode: "PUT" });
+
+/**
+ * Convertit la valeur d'un <input type="datetime-local"> en LocalDateTime Java.
+ *
+ * Le champ rend « 2026-08-12T14:30 » — sans les secondes. Jackson les exige pour construire un
+ * LocalDateTime, d'ou l'ajout. Aucun fuseau n'est ajoute : le backend travaille en heure locale
+ * et un suffixe Z decalerait tous les rendez-vous.
+ */
+export const versLocalDateTime = (saisie: string): string =>
+  saisie.length === 16 ? `${saisie}:00` : saisie;

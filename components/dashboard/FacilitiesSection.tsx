@@ -31,14 +31,20 @@ const pastille = (classe: string, texte: string) => (
   </span>
 );
 
-export default function FacilitiesSection({ registre }: { registre: RegistreTechnique }) {
+export default function FacilitiesSection({
+  registre,
+  cleRafraichissement = 0,
+}: { registre: RegistreTechnique;
+  /** Change de valeur pour forcer un rechargement apres une ecriture. */
+  cleRafraichissement?: number;
+}) {
   const etat = useAuthenticatedResource<Equipment[] | CleaningTask[] | WasteLog[]>(
     (session) => {
       if (registre === "equipements") return fetchEquipment(session.token);
       if (registre === "nettoyage") return fetchCleaningTasks(session.token);
       return fetchWasteLogs(session.token);
     },
-    [registre]
+    [registre, cleRafraichissement]
   );
 
   if (etat.phase === "chargement") {

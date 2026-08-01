@@ -4,7 +4,7 @@
 // negociation WebRTC (voir SignalType : OFFER, ANSWER, ICE_CANDIDATE cote backend), qui n'est
 // pas cablee ici : l'ecran affiche les sessions et leur code, il n'ouvre pas de flux video.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
 
 export type SessionStatus = "SCHEDULED" | "ACTIVE" | "ENDED" | "CANCELLED";
 
@@ -45,3 +45,26 @@ export const fetchSessionsByPatient = (patientId: number, token: string) =>
 
 export const fetchSessionsByDoctor = (doctorId: number, token: string) =>
   apiGet<TeleconsultationSession[]>(`/telemedicine/session/doctor/${doctorId}`, token);
+
+/**
+ * Ouvre une session de teleconsultation pour un rendez-vous existant.
+ *
+ * La session ne se cree pas dans le vide : elle se rattache a un rendez-vous, qui porte deja le
+ * patient, le medecin et l'horaire. Les redemander ici les dedoublerait, avec le risque qu'ils
+ * divergent de ceux du rendez-vous.
+ */
+export const ouvrirSession = (appointmentId: number, token: string) =>
+  apiSend<TeleconsultationSession>(`/telemedicine/session/appointment/${appointmentId}`, token, {});
+
+/**
+ * Transitions d'une session, par son CODE et non son identifiant : c'est ce que le backend
+ * attend, et c'est aussi ce que le patient recoit pour rejoindre.
+ */
+export const demarrerSession = (code: string, token: string) =>
+  apiSend<TeleconsultationSession>(`/telemedicine/session/${code}/start`, token, { methode: "PUT" });
+
+export const terminerSession = (code: string, token: string) =>
+  apiSend<TeleconsultationSession>(`/telemedicine/session/${code}/end`, token, { methode: "PUT" });
+
+export const annulerSession = (code: string, token: string) =>
+  apiSend<TeleconsultationSession>(`/telemedicine/session/${code}/cancel`, token, { methode: "PUT" });

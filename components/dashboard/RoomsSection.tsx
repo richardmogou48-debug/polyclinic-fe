@@ -1,5 +1,6 @@
 "use client";
 
+import RoomActions from "@/components/dashboard/RoomActions";
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import { montant } from "@/lib/billing";
 import { ROOM_STATUS_CLASSES, fetchRooms, litOccupe, roomStatusLabel, type Room } from "@/lib/rooms";
@@ -13,8 +14,22 @@ import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
  */
 const NEUTRE = "bg-neutral-100 text-neutral-600";
 
-export default function RoomsSection() {
-  const etat = useAuthenticatedResource<Room[]>((session) => fetchRooms(session.token));
+export default function RoomsSection({
+  cleRafraichissement = 0,
+  /**
+   * Colonne d'actions. Absente par defaut : la plupart des ecrans ne font que consulter l'etat des
+   * chambres, et un role qui n'a pas le droit d'agir ne doit pas voir de boutons qui echoueront.
+   */
+  avecActions = false,
+  onChangement,
+}: {
+  cleRafraichissement?: number;
+  avecActions?: boolean;
+  onChangement?: () => void;
+}) {
+  const etat = useAuthenticatedResource<Room[]>((session) => fetchRooms(session.token), [
+    cleRafraichissement,
+  ]);
 
   if (etat.phase === "chargement") {
     return <SectionMessage variant="loading" title="Chargement des chambres…" />;
@@ -46,6 +61,11 @@ export default function RoomsSection() {
             <th scope="col" className="px-4 py-3 font-medium">Lits</th>
             <th scope="col" className="px-4 py-3 text-right font-medium">Tarif / nuit</th>
             <th scope="col" className="px-4 py-3 font-medium">État</th>
+            {avecActions && (
+              <th scope="col" className="px-4 py-3 font-medium">
+                <span className="sr-only">Actions</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100">
@@ -102,6 +122,11 @@ export default function RoomsSection() {
                     {roomStatusLabel(chambre.status)}
                   </span>
                 </td>
+                {avecActions && (
+                  <td className="px-4 py-3">
+                    <RoomActions chambre={chambre} onChangement={() => onChangement?.()} />
+                  </td>
+                )}
               </tr>
             );
           })}

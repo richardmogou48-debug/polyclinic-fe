@@ -144,3 +144,31 @@ export const litsDisponibles = (chambres: Room[]): LitDisponible[] =>
           }`,
         }))
     );
+
+/**
+ * Roles autorises a signaler une chambre nettoyee, en miroir de CLEANING_REPORTERS.
+ * L'infirmiere y figure, contrairement a l'hygiene ou elle est absente : les deux services ne
+ * partagent pas leur politique d'acces, et il ne faut pas deduire l'une de l'autre.
+ */
+const RAPPORTEURS_ENTRETIEN: ReadonlySet<Role> = new Set<Role>(["admin", "secretary", "nurse"]);
+
+export const peutSignalerEntretien = (role: Role): boolean => RAPPORTEURS_ENTRETIEN.has(role);
+
+/** Mise en maintenance : reserve a l'administration et au secretariat (ROOM_MANAGERS). */
+const GESTIONNAIRES_CHAMBRE: ReadonlySet<Role> = new Set<Role>(["admin", "secretary"]);
+
+export const peutGererLesChambres = (role: Role): boolean => GESTIONNAIRES_CHAMBRE.has(role);
+
+/** Signale la chambre nettoyee : elle repasse disponible. */
+export const marquerNettoyee = (roomId: number, token: string) =>
+  apiSend<Room>(`/room/${roomId}/mark-cleaned`, token, {});
+
+/**
+ * Met une chambre en maintenance, ou l'en sort.
+ *
+ * L'etat part en parametre de requete (@RequestParam boolean status). Un seul appel pour les deux
+ * sens : le backend n'expose pas deux routes, et en inventer deux ici masquerait qu'il s'agit
+ * d'une bascule.
+ */
+export const basculerMaintenance = (roomId: number, enMaintenance: boolean, token: string) =>
+  apiSend<Room>(`/room/${roomId}/maintenance?status=${enMaintenance}`, token, {});

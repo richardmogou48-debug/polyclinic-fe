@@ -4,7 +4,8 @@
 // inattendue est affichee telle quelle plutot que masquee : mieux vaut un libelle brut a
 // l'ecran qu'une ligne silencieusement vide.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
+import type { Role } from "@/lib/navigation";
 
 export type ComplaintCategory =
   | "MEDICAL_CARE"
@@ -131,3 +132,118 @@ export const AUDIT_STATUS_CLASSES: Record<AuditStatus, string> = {
 export const fetchComplaints = (token: string) => apiGet<Complaint[]>("/quality/complaint", token);
 export const fetchIncidents = (token: string) => apiGet<IncidentReport[]>("/quality/incident", token);
 export const fetchAudits = (token: string) => apiGet<InternalAudit[]>("/quality/audit", token);
+
+/**
+ * Roles autorises a ecrire en qualite, en miroir de QUALITY_STAFF cote QualityAccessFilter.
+ *
+ * Large a dessein : un incident se declare par celui qui l'a vu, et restreindre la declaration au
+ * responsable qualite garantirait qu'une partie des incidents ne soit jamais consignee.
+ */
+const AGENTS_QUALITE: ReadonlySet<Role> = new Set<Role>([
+  "admin",
+  "secretary",
+  "doctor",
+  "quality",
+]);
+
+export const peutEcrireQualite = (role: Role): boolean => AGENTS_QUALITE.has(role);
+
+export const CATEGORIES_RECLAMATION = Object.entries(CATEGORIES) as [ComplaintCategory, string][];
+export const GRAVITES = Object.entries(SEVERITIES) as [Severity, string][];
+export const STATUTS_RECLAMATION = Object.entries(COMPLAINT_STATUS) as [ComplaintStatus, string][];
+export const STATUTS_INCIDENT = Object.entries(INCIDENT_STATUS) as [IncidentStatus, string][];
+
+export type NouvelleReclamation = {
+  patientId?: number | null;
+  category: ComplaintCategory;
+  description: string;
+};
+
+/** Le statut n'est pas transmis : le backend pose OPEN. Une reclamation deja close n'existe pas. */
+export const declarerReclamation = (reclamation: NouvelleReclamation, token: string) =>
+  apiSend<Complaint>("/quality/complaint", token, { corps: reclamation });
+
+/**
+ * Fait avancer une reclamation.
+ *
+ * Statut et notes partent en parametres de requete, pas dans un corps : c'est la signature du
+ * backend (@RequestParam). Les notes sont encodees, un « & » dans un texte libre couperait sinon
+ * la requete.
+ */
+export const changerStatutReclamation = (
+  id: number,
+  statut: ComplaintStatus,
+  notes: string | null,
+  token: string
+) =>
+  apiSend<Complaint>(
+    `/quality/complaint/${id}/status?status=${statut}` +
+      (notes ? `&notes=${encodeURIComponent(notes)}` : ""),
+    token,
+    { methode: "PUT" }
+  );
+
+export type NouvelIncident = {
+  /** LocalDateTime sans fuseau. */
+  incidentDate: string;
+  location: string;
+  severity: Severity;
+  description: string;
+  immediateActionTaken?: string | null;
+};
+
+/**
+ * Declare un incident.
+ *
+ * `reportedBy` n'est pas transmis : le backend l'etablit depuis l'en-tete d'identite pose par la
+ * Gateway et ecrase ce que porterait le corps. L'envoyer donnerait l'illusion que le client
+ * choisit qui signale.
+ */
+export const declarerIncident = (incident: NouvelIncident, token: string) =>
+  apiSend<IncidentReport>("/quality/incident", token, { corps: incident });
+
+export const changerStatutIncident = (
+  id: number,
+  statut: IncidentStatus,
+  action: string | null,
+  token: string
+) =>
+  apiSend<IncidentReport>(
+    `/quality/incident/${id}/status?status=${statut}` +
+      (action ? `&action=${encodeURIComponent(action)}` : ""),
+    token,
+    { methode: "PUT" }
+  );
+
+export type NouvelAudit = {
+  /** LocalDate : « 2026-08-12 », sans heure. */
+  auditDate: string;
+  department: string;
+  title: string;
+};
+
+/** Planifie un audit. Le backend pose PLANNED ; la note et les constats viennent a la cloture. */
+export const planifierAudit = (audit: NouvelAudit, token: string) =>
+  apiSend<InternalAudit>("/quality/audit", token, { corps: audit });
+
+/**
+ * Cloture un audit.
+ *
+ * Les trois valeurs partent en parametres de requete (@RequestParam) et sont toutes exigees par
+ * le backend : un audit clos sans constat ni action corrective ne vaut que par sa note, et une
+ * note sans justification ne se defend pas devant un inspecteur.
+ */
+export const cloturerAudit = (
+  id: number,
+  note: number,
+  constats: string,
+  actions: string,
+  token: string
+) =>
+  apiSend<InternalAudit>(
+    `/quality/audit/${id}/complete?score=${note}` +
+      `&findings=${encodeURIComponent(constats)}` +
+      `&actions=${encodeURIComponent(actions)}`,
+    token,
+    { methode: "PUT" }
+  );

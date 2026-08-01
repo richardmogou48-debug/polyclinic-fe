@@ -7,8 +7,10 @@ import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import type { Medicine } from "@/lib/pharmacy";
 
 /** Catalogue des medicaments referencés. */
-export default function MedicinesSection() {
-  const etat = useAuthenticatedResource<Medicine[]>((session) => fetchMedicines(session.token));
+export default function MedicinesSection({ cleRafraichissement = 0 }: { cleRafraichissement?: number }) {
+  const etat = useAuthenticatedResource<Medicine[]>((session) => fetchMedicines(session.token), [
+    cleRafraichissement,
+  ]);
 
   if (etat.phase === "chargement") {
     return <SectionMessage variant="loading" title="Chargement du catalogue…" />;

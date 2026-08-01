@@ -25,7 +25,13 @@ export type PorteeFactures = "propre" | "globale";
 
 const NEUTRE = "bg-neutral-100 text-neutral-600";
 
-export default function InvoicesSection({ portee }: { portee: PorteeFactures }) {
+export default function InvoicesSection({
+  portee,
+  cleRafraichissement = 0,
+}: { portee: PorteeFactures;
+  /** Change de valeur pour forcer un rechargement apres une ecriture. */
+  cleRafraichissement?: number;
+}) {
   const etat = useAuthenticatedResource<Invoice[]>(
     (session) => {
       if (portee === "globale") {
@@ -34,7 +40,7 @@ export default function InvoicesSection({ portee }: { portee: PorteeFactures }) 
       // Un compte sans fiche patient n'a pas d'identifiant de facturation.
       return session.profileId ? fetchInvoicesByPatient(Number(session.profileId), session.token) : null;
     },
-    [portee]
+    [portee, cleRafraichissement]
   );
 
   if (etat.phase === "chargement") {

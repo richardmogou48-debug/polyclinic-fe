@@ -4,7 +4,8 @@
 // aucune route ne l'expose et le service ne s'en sert pas. L'ecran « Stock » du pharmacien
 // attend donc un endpoint qui reste a ecrire — ce n'est pas un modele manquant.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
+import type { Role } from "@/lib/navigation";
 
 export type MedicineCategory =
   | "ANTIBIOTIC"
@@ -91,3 +92,34 @@ export type InventoryLot = {
 /** Etat du stock, peremption la plus proche d'abord. Reserve a la pharmacie et a l'administration. */
 export const fetchInventory = (token: string) =>
   apiGet<InventoryLot[]>("/pharmacy/medicines/inventory", token);
+
+/**
+ * Roles autorises a tenir le catalogue, en miroir de CATALOG_EDITORS cote MedicineAccessFilter.
+ *
+ * Le medecin LIT le catalogue — prescrire suppose de savoir ce qui existe — mais ne l'ecrit pas :
+ * referencer un medicament est un acte de pharmacie.
+ */
+const TENEURS_DU_CATALOGUE: ReadonlySet<Role> = new Set<Role>(["admin", "pharmacist"]);
+
+export const peutTenirLeCatalogue = (role: Role): boolean => TENEURS_DU_CATALOGUE.has(role);
+
+export const CATEGORIES_MEDICAMENT = Object.entries(CATEGORIES) as [MedicineCategory, string][];
+export const TYPES_MEDICAMENT = Object.entries(TYPES) as [MedicineType, string][];
+
+export type SaisieMedicament = {
+  /** Present : mise a jour. Absent : creation. Le backend distingue les deux par cette valeur. */
+  id?: number | null;
+  name: string;
+  dosage: string;
+  category: MedicineCategory;
+  type: MedicineType;
+  manufacturer?: string | null;
+  /** Entier : les prix sont en francs CFA, sans centimes. */
+  unitPrice: number;
+};
+
+export const referencerMedicament = (medicament: SaisieMedicament, token: string) =>
+  apiSend<number>("/pharmacy/medicines/add", token, { corps: medicament });
+
+export const mettreAJourMedicament = (medicament: SaisieMedicament, token: string) =>
+  apiSend("/pharmacy/medicines/update", token, { methode: "PUT", corps: medicament });
