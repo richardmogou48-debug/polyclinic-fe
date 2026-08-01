@@ -3,6 +3,8 @@
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import {
+  examCategoryLabel,
+  examStatusLabel,
   fetchMedicalRecord,
   formatDateTime,
   mesure,
@@ -112,20 +114,72 @@ export default function MedicalRecordSection({ patientId }: { patientId?: number
                 <p className="mt-1 text-sm text-neutral-500">{entree.additionalNotes}</p>
               )}
 
-              {entree.prescription?.items?.length ? (
+              {/* Les examens avant les ordonnances : c'est l'ordre du raisonnement clinique, et
+                  celui dans lequel le medecin relit sa propre consultation. */}
+              {entree.exams?.length ? (
                 <div className="mt-3 border-t border-neutral-200 pt-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Ordonnance</p>
-                  <ul className="mt-1 flex flex-col gap-1">
-                    {entree.prescription.items.map((ligne) => (
-                      <li key={ligne.id} className="text-sm text-secondary-500">
-                        {ligne.medicineName ?? "Médicament non nommé"}
-                        <span className="text-neutral-500">
-                          {ligne.dosage ? ` — ${ligne.dosage}` : ""}
-                          {ligne.duration ? `, ${ligne.duration}` : ""}
+                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Examens</p>
+                  <ul className="mt-1 flex flex-col gap-2">
+                    {entree.exams.map((examen) => (
+                      <li key={examen.id} className="text-sm">
+                        <span className="font-medium text-secondary-500">
+                          {examen.label ?? "Examen non nommé"}
                         </span>
+                        <span className="text-neutral-500"> — {examCategoryLabel(examen.category)}</span>
+                        {examen.urgent && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                            Urgent
+                          </span>
+                        )}
+                        {examen.result ? (
+                          <p className="mt-0.5 text-neutral-600">
+                            {examen.result.conclusion ?? examen.result.findings ?? "Résultat rendu"}
+                            {/* Un resultat hors normes doit se voir sans avoir a lire la
+                                conclusion : la couleur seule ne suffirait pas, le mot est ecrit. */}
+                            {examen.result.abnormal && (
+                              <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800">
+                                Hors normes
+                              </span>
+                            )}
+                          </p>
+                        ) : (
+                          <p className="mt-0.5 text-neutral-500">{examStatusLabel(examen.status)}</p>
+                        )}
                       </li>
                     ))}
                   </ul>
+                </div>
+              ) : null}
+
+              {entree.prescriptions?.some((o) => o.items?.length) ? (
+                <div className="mt-3 border-t border-neutral-200 pt-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                    {/* Le pluriel n'est pas cosmetique : une consultation porte souvent deux
+                        ordonnances, celle prise avant les resultats et le traitement d'apres. */}
+                    {entree.prescriptions.length > 1 ? "Ordonnances" : "Ordonnance"}
+                  </p>
+                  {entree.prescriptions.map((ordonnance) => (
+                    <div key={ordonnance.id} className="mt-1">
+                      <ul className="flex flex-col gap-1">
+                        {(ordonnance.items ?? []).map((ligne) => (
+                          <li key={ligne.id} className="text-sm text-secondary-500">
+                            {ligne.medicineName ?? "Médicament non nommé"}
+                            <span className="text-neutral-500">
+                              {ligne.dosage ? ` — ${ligne.dosage}` : ""}
+                              {ligne.duration ? `, ${ligne.duration}` : ""}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {/* Prescrit sans attendre les resultats. L'afficher est le seul interet
+                          d'avoir exige un motif : masque, il ne servirait a personne. */}
+                      {ordonnance.derogationMotif && (
+                        <p className="mt-1 text-xs text-amber-800">
+                          Prescrit sans attendre les résultats — {ordonnance.derogationMotif}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : null}
             </li>

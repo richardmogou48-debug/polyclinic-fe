@@ -20,6 +20,11 @@ export type PrescribedItem = {
 export type Prescription = {
   id: number;
   issueDate: string | null;
+  /**
+   * Renseigne uniquement lorsque le traitement a ete prescrit alors que des examens demandes
+   * n'avaient pas rendu. Null est le cas nominal.
+   */
+  derogationMotif: string | null;
   items: PrescribedItem[] | null;
 };
 
@@ -40,9 +45,71 @@ export type MedicalEntry = {
   diagnosis: string | null;
   treatmentPlan: string | null;
   additionalNotes: string | null;
-  prescription: Prescription | null;
+  /**
+   * Une consultation porte plusieurs ordonnances, et non une seule comme auparavant : le medecin
+   * prescrit les examens, lit les resultats, puis le traitement — sur la meme consultation.
+   */
+  prescriptions: Prescription[] | null;
+  /** Examens demandes lors de cette consultation, resultat inclus quand il existe. */
+  exams: ExamRequest[] | null;
   attachments: MedicalAttachment[] | null;
 };
+
+export type ExamCategory = "BIOLOGY" | "IMAGING" | "FUNCTIONAL" | "OTHER";
+export type ExamStatus = "REQUESTED" | "COMPLETED" | "CANCELLED";
+
+export type ExamResult = {
+  id: number;
+  performedBy: number | null;
+  performedAt: string | null;
+  findings: string | null;
+  conclusion: string | null;
+  /** Hors normes. Pose par le soignant, jamais deduit de valeurs de reference cote backend. */
+  abnormal: boolean;
+};
+
+export type ExamRequest = {
+  id: number;
+  requestedBy: number | null;
+  requestedAt: string | null;
+  category: ExamCategory | null;
+  label: string | null;
+  clinicalIndication: string | null;
+  urgent: boolean;
+  status: ExamStatus | null;
+  /** Null tant que l'examen n'a pas rendu. */
+  result: ExamResult | null;
+};
+
+/**
+ * Demande d'examen vue hors du dossier : le backend y remonte le patient et la consultation, que
+ * l'entite ne porte pas (son lien vers la consultation est @JsonIgnore).
+ */
+export type ExamRequestView = ExamRequest & {
+  patientId: number | null;
+  entryId: number | null;
+  consultationDate: string | null;
+  diagnosis: string | null;
+};
+
+export const EXAM_CATEGORY_LABELS: Record<ExamCategory, string> = {
+  BIOLOGY: "Biologie",
+  IMAGING: "Imagerie",
+  FUNCTIONAL: "Exploration fonctionnelle",
+  OTHER: "Autre",
+};
+
+export const EXAM_STATUS_LABELS: Record<ExamStatus, string> = {
+  REQUESTED: "En attente",
+  COMPLETED: "Résultat rendu",
+  CANCELLED: "Annulée",
+};
+
+export const examCategoryLabel = (valeur: string | null): string =>
+  valeur ? (EXAM_CATEGORY_LABELS[valeur as ExamCategory] ?? valeur) : "—";
+
+export const examStatusLabel = (valeur: string | null): string =>
+  valeur ? (EXAM_STATUS_LABELS[valeur as ExamStatus] ?? valeur) : "—";
 
 export type VitalSign = {
   id: number;
@@ -142,6 +209,19 @@ export const fetchRecentPrescriptions = (token: string) =>
 /** Ordonnances d'un patient donne. */
 export const fetchPrescriptionsByPatient = (patientId: number, token: string) =>
   apiGet<PrescriptionView[]>(`/medicalrecord/patient/${patientId}/prescriptions`, token);
+
+/** Examens d'un patient, le plus recent d'abord, resultat inclus. */
+export const fetchExamsByPatient = (patientId: number, token: string) =>
+  apiGet<ExamRequestView[]>(`/medicalrecord/patient/${patientId}/exams`, token);
+
+/**
+ * File du plateau technique : les examens qui n'ont pas rendu, urgents d'abord.
+ *
+ * Contrairement a la file des ordonnances, celle-ci dit reellement « ce qui reste a faire » : la
+ * demande porte un statut, et il bascule a l'enregistrement du resultat.
+ */
+export const fetchPendingExams = (token: string) =>
+  apiGet<ExamRequestView[]>("/medicalrecord/exams/pending", token);
 
 /**
  * Formate un LocalDateTime Java. Renvoie la valeur brute si elle n'est pas analysable : mieux
