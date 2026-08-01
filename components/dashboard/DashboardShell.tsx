@@ -1,20 +1,19 @@
 import type { ReactNode } from "react";
 import type { RoleConfig } from "@/lib/navigation";
+import MobileNav from "@/components/dashboard/MobileNav";
 import Sidebar from "@/components/dashboard/Sidebar";
 
 /**
- * Ossature commune aux neuf tableaux de bord : barre laterale, et colonne de contenu.
+ * Ossature commune aux neuf tableaux de bord.
  *
- * Le fond filigrane est pose ici et nulle part ailleurs — les neuf layouts de role passent tous
- * par ce composant, de sorte qu'il n'existe qu'un seul endroit ou le changer.
+ * Deux navigations coexistent, departagees par le seul CSS : la barre laterale a partir de « lg »,
+ * le tiroir en dessous. Choisir en JavaScript supposerait de connaitre la largeur de l'ecran au
+ * rendu serveur, ce qui n'est pas le cas — et produirait un ecart d'hydratation.
  *
- * Il est applique a la COLONNE de contenu et non a la page entiere : la barre laterale est
- * sombre, un motif clair y disparaitrait, et l'y faire passer couperait la colombe en deux au
- * niveau de la separation.
- *
- * `background-attachment` reste a sa valeur par defaut, donc le motif suit le defilement. Le
- * fixer donnerait l'impression d'un contenu qui glisse sur une image immobile, effet de vitrine
- * qui n'a pas sa place sur un outil de travail — et `fixed` se comporte mal sur mobile.
+ * Le fond filigrane est pose ici et nulle part ailleurs : les neuf layouts de role passent tous
+ * par ce composant. Il est applique a la COLONNE de contenu et non a la page entiere — la barre
+ * laterale est sombre, un motif clair y disparaitrait, et l'y faire passer couperait la colombe
+ * au niveau de la separation.
  */
 export default function DashboardShell({
   config,
@@ -26,19 +25,18 @@ export default function DashboardShell({
   return (
     <div className="flex min-h-screen flex-1">
       <Sidebar config={config} />
+
       <div
-        className="flex flex-1 flex-col bg-neutral-50"
+        className="flex min-w-0 flex-1 flex-col bg-neutral-50"
         style={{
           backgroundImage: "url('/background_dashboard.svg')",
           backgroundRepeat: "no-repeat",
-          // Ancre en bas a droite, entierement dans le cadre : a cette taille, le debord qui
-          // convenait a un grand motif n'en laisserait voir qu'un bout d'aile, illisible.
+          // Ancre en bas a droite, entierement dans le cadre et hors de la zone de lecture.
           backgroundPosition: "right 2.5rem bottom 2.5rem",
-          // Un embleme discret plutot qu'un aplat : assez petit pour se lire d'un coup d'oeil
-          // comme une colombe, et non comme une tache derriere le contenu.
           backgroundSize: "4.5rem auto",
         }}
       >
+        <MobileNav config={config} />
         {children}
       </div>
     </div>

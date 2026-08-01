@@ -8,7 +8,7 @@ export default function Page() {
   return (
     <>
       <DashboardPageHeader title="Patients" roleLabel={roleConfigs.secretary.label} />
-      <main className="flex flex-1 flex-col gap-8 px-8 py-6">
+      <main className="flex flex-1 flex-col gap-8 px-4 py-6 sm:px-8">
         <PatientsWorkspace />
       </main>
     </>

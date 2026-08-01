@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <>
       <DashboardPageHeader title="Paiements" roleLabel={roleConfigs.finance.label} />
-      <main className="flex-1 px-8 py-6">
+      <main className="flex-1 px-4 py-6 sm:px-8">
         <PlaceholderSection title="Paiements" description="Suivi des paiements reçus." />
       </main>
     </>

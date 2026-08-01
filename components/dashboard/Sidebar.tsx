@@ -1,22 +1,19 @@
-"use client";
-
-import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
 import type { RoleConfig } from "@/lib/navigation";
-import { clearSession } from "@/lib/auth";
+import NavList from "@/components/dashboard/NavList";
 
+/**
+ * Barre laterale permanente, a partir de « lg » seulement.
+ *
+ * En dessous, elle est masquee au profit du tiroir de MobileNav : ses 16 rem fixes laissaient
+ * 8 rem de contenu sur un telephone de 24 rem de large, ce qui rendait chaque tableau illisible.
+ * Elle n'est pas retiree du DOM par une condition JavaScript mais par `hidden lg:flex` : le
+ * serveur ne connait pas la largeur de l'ecran, et tout rendu conditionnel sur cette base
+ * provoquerait un ecart d'hydratation.
+ */
 export default function Sidebar({ config }: { config: RoleConfig }) {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    clearSession();
-    router.push("/login");
-  };
-
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-secondary-200/10 bg-secondary-950 text-neutral-50">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-secondary-200/10 bg-secondary-950 text-neutral-50 lg:flex">
       <div className="flex items-center gap-3 border-b border-secondary-200/10 px-5 py-5">
         <Image
           src="/logo_polyclinic.png"
@@ -31,34 +28,7 @@ export default function Sidebar({ config }: { config: RoleConfig }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {config.navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block rounded-md px-3 py-2 text-sm transition-colors ${
-                isActive
-                  ? "bg-primary-500/15 font-medium text-primary-300"
-                  : "text-neutral-300 hover:bg-secondary-900 hover:text-neutral-50"
-              }`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-secondary-200/10 px-3 py-4">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="block w-full rounded-md px-3 py-2 text-left text-sm text-neutral-400 transition-colors hover:bg-secondary-900 hover:text-accent-400"
-        >
-          Se déconnecter
-        </button>
-      </div>
+      <NavList config={config} />
     </aside>
   );
 }

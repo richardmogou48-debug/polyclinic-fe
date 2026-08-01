@@ -64,7 +64,7 @@ export default function Modal({
       // `m-auto` est indispensable : <dialog> se centre par le `margin: auto` de la feuille de
       // style du navigateur, que le preflight de Tailwind remet a zero. Sans lui la modale se
       // colle en haut a gauche.
-      className="m-auto w-full max-w-2xl rounded-lg border border-neutral-200 bg-white p-0 shadow-card backdrop:bg-secondary-500/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-lg border border-neutral-200 bg-white p-0 shadow-card backdrop:bg-secondary-500/40"
     >
       <div className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4">
         <h2 id="titre-modale" className="font-heading text-base font-semibold text-secondary-500">

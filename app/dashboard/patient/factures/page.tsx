@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <>
       <DashboardPageHeader title="Mes factures" roleLabel={roleConfigs.patient.label} />
-      <main className="flex-1 px-8 py-6">
+      <main className="flex-1 px-4 py-6 sm:px-8">
         {/* Portee « propre » : la route par patient, seule ouverte au role PATIENT. */}
         <InvoicesSection portee="propre" />
       </main>
