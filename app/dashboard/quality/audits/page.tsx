@@ -1,5 +1,5 @@
 import DashboardPageHeader from "@/components/dashboard/DashboardPageHeader";
-import PlaceholderSection from "@/components/dashboard/PlaceholderSection";
+import QualitySection from "@/components/dashboard/QualitySection";
 import { roleConfigs } from "@/lib/navigation";
 
 export default function Page() {
@@ -7,7 +7,7 @@ export default function Page() {
     <>
       <DashboardPageHeader title="Audits" roleLabel={roleConfigs.quality.label} />
       <main className="flex-1 px-8 py-6">
-        <PlaceholderSection title="Audits" description="Audits internes planifiés." />
+        <QualitySection registre="audit" />
       </main>
     </>
   );

@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import SectionMessage from "@/components/dashboard/SectionMessage";
-import { ApiError, UnauthorizedError } from "@/lib/api";
-import { clearSession, readSession } from "@/lib/auth";
+import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import {
   fetchAppointmentsByDoctor,
   fetchAppointmentsByPatient,
@@ -25,12 +22,6 @@ import {
  * localStorage, auquel le serveur n'a pas acces.
  */
 export type Perspective = "doctor" | "patient";
-
-type Etat =
-  | { phase: "chargement" }
-  | { phase: "erreur"; message: string }
-  | { phase: "sans-fiche" }
-  | { phase: "pret"; rendezVous: Appointment[] };
 
 const CLASSES_STATUT: Record<AppointmentStatus, string> = {
   SHEDULED: "bg-tertiary-50 text-tertiary-700",
@@ -78,69 +69,23 @@ const REGLAGES: Record<
 };
 
 export default function AppointmentsSection({ perspective }: { perspective: Perspective }) {
-  const router = useRouter();
-  const [etat, setEtat] = useState<Etat>({ phase: "chargement" });
   const reglages = REGLAGES[perspective];
 
-  useEffect(() => {
-    // Evite d'ecrire dans un composant demonte si l'utilisateur quitte la page en cours de requete.
-    let actif = true;
-
-    const charger = async () => {
-      const session = readSession();
-
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-
-      // Un compte sans fiche ProfileMS n'a pas d'identifiant exploitable ici. Le cas se produit
-      // pour tout compte cree directement en base plutot que par /user/register ou le seeder,
-      // qui sont les seuls chemins provisionnant une fiche. Message explicite plutot qu'une
-      // liste vide, qui laisserait croire a une absence de rendez-vous.
-      if (!session.profileId) {
-        if (actif) {
-          setEtat({ phase: "sans-fiche" });
-        }
-        return;
-      }
-
-      try {
-        const rendezVous = await reglages.charger(Number(session.profileId), session.token);
-        if (actif) {
-          setEtat({ phase: "pret", rendezVous });
-        }
-      } catch (cause) {
-        if (!actif) {
-          return;
-        }
-        if (cause instanceof UnauthorizedError) {
-          clearSession();
-          router.replace("/login");
-          return;
-        }
-        const attendu = cause instanceof ApiError;
-        if (!attendu) {
-          console.error(cause);
-        }
-        setEtat({
-          phase: "erreur",
-          message: attendu ? cause.message : "Une erreur inattendue est survenue.",
-        });
-      }
-    };
-
-    void charger();
-    return () => {
-      actif = false;
-    };
-  }, [router, reglages]);
+  // Un compte sans fiche ProfileMS n'a pas d'identifiant exploitable ici — le cas se produit pour
+  // tout compte cree directement en base plutot que par /user/register ou le seeder, seuls chemins
+  // provisionnant une fiche. Rendre null bascule en « impossible » : message explicite plutot
+  // qu'une liste vide, qui laisserait croire a une absence de rendez-vous.
+  const etat = useAuthenticatedResource(
+    (session) =>
+      session.profileId ? reglages.charger(Number(session.profileId), session.token) : null,
+    [perspective]
+  );
 
   if (etat.phase === "chargement") {
     return <SectionMessage variant="loading" title="Chargement des rendez-vous…" />;
   }
 
-  if (etat.phase === "sans-fiche") {
+  if (etat.phase === "impossible") {
     return (
       <SectionMessage
         variant="error"
@@ -156,7 +101,7 @@ export default function AppointmentsSection({ perspective }: { perspective: Pers
     );
   }
 
-  if (etat.rendezVous.length === 0) {
+  if (etat.donnees.length === 0) {
     return (
       <SectionMessage variant="empty" title="Aucun rendez-vous" description={reglages.detailVide} />
     );
@@ -175,7 +120,7 @@ export default function AppointmentsSection({ perspective }: { perspective: Pers
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100">
-          {etat.rendezVous.map((rdv) => {
+          {etat.donnees.map((rdv) => {
             const complement = reglages.complement(rdv);
             return (
               <tr key={rdv.id} className="transition-colors duration-250 ease-smooth hover:bg-neutral-50">

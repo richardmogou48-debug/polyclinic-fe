@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import SectionMessage from "@/components/dashboard/SectionMessage";
-import { ApiError, UnauthorizedError } from "@/lib/api";
-import { clearSession, readSession } from "@/lib/auth";
+import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import {
   fetchMedicalRecord,
   formatDateTime,
   mesure,
   surgeryStatusLabel,
-  type MedicalRecord,
   type SurgeryStatus,
 } from "@/lib/medicalRecords";
 
@@ -22,12 +18,6 @@ import {
  * autorise sur n'importe quel patient. Un patient qui passerait l'identifiant d'un autre
  * obtiendrait un 403 du backend, pas une fuite.
  */
-type Etat =
-  | { phase: "chargement" }
-  | { phase: "erreur"; message: string }
-  | { phase: "sans-fiche" }
-  | { phase: "pret"; dossier: MedicalRecord };
-
 const CLASSES_STATUT_CHIRURGIE: Record<SurgeryStatus, string> = {
   SCHEDULED: "bg-tertiary-50 text-tertiary-700",
   IN_PROGRESS: "bg-primary-50 text-primary-700",
@@ -35,65 +25,22 @@ const CLASSES_STATUT_CHIRURGIE: Record<SurgeryStatus, string> = {
 };
 
 export default function MedicalRecordSection({ patientId }: { patientId?: number }) {
-  const router = useRouter();
-  const [etat, setEtat] = useState<Etat>({ phase: "chargement" });
-
-  useEffect(() => {
-    let actif = true;
-
-    const charger = async () => {
-      const session = readSession();
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-
-      // Sans identifiant explicite, on lit le dossier du titulaire de la session. Un compte cree
-      // directement en base n'a pas de fiche ProfileMS, donc pas de dossier identifiable.
+  // Sans identifiant explicite, on lit le dossier du titulaire de la session. Un compte cree
+  // directement en base n'a pas de fiche ProfileMS, donc pas de dossier identifiable : rendre
+  // null bascule en « impossible » plutot que d'interroger un identifiant absent.
+  const etat = useAuthenticatedResource(
+    (session) => {
       const cible = patientId ?? (session.profileId ? Number(session.profileId) : null);
-      if (cible === null) {
-        if (actif) {
-          setEtat({ phase: "sans-fiche" });
-        }
-        return;
-      }
-
-      try {
-        const dossier = await fetchMedicalRecord(cible, session.token);
-        if (actif) {
-          setEtat({ phase: "pret", dossier });
-        }
-      } catch (cause) {
-        if (!actif) {
-          return;
-        }
-        if (cause instanceof UnauthorizedError) {
-          clearSession();
-          router.replace("/login");
-          return;
-        }
-        const attendu = cause instanceof ApiError;
-        if (!attendu) {
-          console.error(cause);
-        }
-        setEtat({
-          phase: "erreur",
-          message: attendu ? cause.message : "Une erreur inattendue est survenue.",
-        });
-      }
-    };
-
-    void charger();
-    return () => {
-      actif = false;
-    };
-  }, [router, patientId]);
+      return cible === null ? null : fetchMedicalRecord(cible, session.token);
+    },
+    [patientId]
+  );
 
   if (etat.phase === "chargement") {
     return <SectionMessage variant="loading" title="Chargement du dossier…" />;
   }
 
-  if (etat.phase === "sans-fiche") {
+  if (etat.phase === "impossible") {
     return (
       <SectionMessage
         variant="error"
@@ -107,7 +54,7 @@ export default function MedicalRecordSection({ patientId }: { patientId?: number
     return <SectionMessage variant="error" title="Dossier indisponible" description={etat.message} />;
   }
 
-  const { dossier } = etat;
+  const dossier = etat.donnees;
   // Le backend cree le dossier a la premiere lecture : il existe toujours, mais peut etre vide.
   // Ses collections arrivent a null, pas a [].
   const consultations = dossier.entries ?? [];
