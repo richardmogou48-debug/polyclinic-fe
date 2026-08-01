@@ -52,6 +52,10 @@ export const roleConfigs: Record<Role, RoleConfig> = {
     navItems: withBase("/dashboard/doctor", [
       { slug: "", label: "Vue d'ensemble", description: "Aperçu de votre journée." },
       { slug: "rendez-vous", label: "Mes rendez-vous", description: "Planning de consultations." },
+      // Le poste de travail du medecin : consultation, examens, ordonnance et hospitalisation
+      // s'y enchainent. Place avant les dossiers, qui ne servent qu'a relire.
+      { slug: "consultations", label: "Consultations", description: "Consigner une consultation, demander des examens, prescrire." },
+      { slug: "examens", label: "Examens en attente", description: "Examens demandés dont le résultat n'est pas rendu." },
       { slug: "patients", label: "Dossiers patients", description: "Dossiers médicaux de vos patients." },
       { slug: "teleconsultation", label: "Téléconsultation", description: "Sessions de téléconsultation." },
       { slug: "prescriptions", label: "Ordonnances", description: "Prescriptions émises." },
@@ -67,6 +71,8 @@ export const roleConfigs: Record<Role, RoleConfig> = {
       // L'accueil est le premier geste du parcours : le patient arrive, l'infirmiere
       // l'enregistre et prend ses parametres dans la meme saisie.
       { slug: "accueil", label: "Accueil", description: "Enregistrer un patient et relever ses paramètres." },
+      // Le pendant de l'accueil : l'infirmiere realise les examens et saisit ce qu'ils rendent.
+      { slug: "examens", label: "Examens à réaliser", description: "Examens demandés en attente de résultat." },
       { slug: "patients", label: "Patients hospitalisés", description: "Suivi des patients par chambre/lit." },
       { slug: "chambres", label: "Chambres & lits", description: "État d'occupation des chambres." },
       { slug: "dossiers", label: "Dossiers médicaux", description: "Consultation des dossiers." },

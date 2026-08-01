@@ -1,6 +1,7 @@
 // Chambres et lits, alignes sur RoomMS/entity/{Room,Bed,RoomCategory}.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
+import type { Role } from "@/lib/navigation";
 
 export type RoomStatus = "AVAILABLE" | "OCCUPIED" | "PARTIALLY_OCCUPIED" | "CLEANING" | "MAINTENANCE";
 
@@ -78,3 +79,68 @@ export type CurrentStay = {
 
 /** Patients actuellement hospitalises, l'admission la plus recente d'abord. */
 export const fetchCurrentStays = (token: string) => apiGet<CurrentStay[]>("/room/current-stays", token);
+
+/**
+ * Roles autorises a placer, transferer ou faire sortir un patient, en miroir de BED_OPERATORS
+ * cote RoomAccessFilter. La secretaire y figure : l'admission est un geste d'accueil autant que
+ * de soin.
+ */
+const OPERATEURS_DE_LIT: ReadonlySet<Role> = new Set<Role>(["admin", "secretary", "doctor", "nurse"]);
+
+export const peutGererLesLits = (role: Role): boolean => OPERATEURS_DE_LIT.has(role);
+
+/**
+ * Place un patient dans un lit libre.
+ *
+ * Le backend fait trois ecritures dans la meme transaction — le lit, l'historique de sejour et
+ * l'etat de la chambre — de sorte qu'un lit ne peut pas se retrouver marque occupe sans sejour
+ * ouvert en face.
+ */
+export const admettrePatient = (bedId: number, patientId: number, token: string) =>
+  apiSend<Room>(`/room/assign-bed/${bedId}/patient/${patientId}`, token, {});
+
+/**
+ * Transfere un patient d'un lit vers un autre.
+ *
+ * Passe par la route dediee plutot que par une sortie suivie d'une admission : celles-ci
+ * clotureraient le sejour et en ouvriraient un second, faisant disparaitre la continuite de
+ * l'hospitalisation de l'historique.
+ */
+export const transfererPatient = (
+  patientId: number,
+  ancienLitId: number,
+  nouveauLitId: number,
+  token: string
+) =>
+  apiSend<string>(
+    `/room/transfer-patient/${patientId}/from/${ancienLitId}/to/${nouveauLitId}`,
+    token,
+    {}
+  );
+
+/** Fait sortir le patient occupant ce lit : le sejour est clos et le lit repasse libre. */
+export const libererLit = (bedId: number, token: string) =>
+  apiSend<Room>(`/room/release-bed/${bedId}`, token, {});
+
+/** Lits libres d'une liste de chambres, aplatis et etiquetes pour un menu deroulant. */
+export type LitDisponible = {
+  bedId: number;
+  libelle: string;
+};
+
+export const litsDisponibles = (chambres: Room[]): LitDisponible[] =>
+  chambres
+    // Une chambre en nettoyage ou en maintenance peut porter des lits libres en base ; y placer
+    // un patient serait pourtant une erreur. Le filtre est ici parce que le backend, lui, ne
+    // regarde que le lit.
+    .filter((chambre) => chambre.status !== "CLEANING" && chambre.status !== "MAINTENANCE")
+    .flatMap((chambre) =>
+      (chambre.beds ?? [])
+        .filter((lit) => !litOccupe(lit))
+        .map((lit) => ({
+          bedId: lit.id,
+          libelle: `Chambre ${chambre.roomNumber ?? "?"} — lit ${lit.bedNumber ?? lit.id}${
+            chambre.category?.name ? ` (${chambre.category.name})` : ""
+          }`,
+        }))
+    );

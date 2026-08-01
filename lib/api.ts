@@ -4,7 +4,22 @@
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  /**
+   * Statut HTTP, quand l'erreur vient d'une reponse du serveur. Absent sur un echec reseau, ou
+   * il n'y a pas eu de reponse du tout.
+   *
+   * Sert a distinguer un refus metier d'une panne : l'ordonnance repond 409 quand des examens
+   * sont en attente, et le formulaire doit alors devoiler le champ de derogation plutot
+   * qu'afficher une erreur. Reconnaitre ce cas au texte du message serait fragile.
+   */
+  readonly statut?: number;
+
+  constructor(message: string, statut?: number) {
+    super(message);
+    this.statut = statut;
+  }
+}
 
 /**
  * Jeton absent, expire ou refuse par la Gateway. Distingue d'ApiError pour que l'appelant
@@ -70,7 +85,7 @@ export async function login(email: string, password: string): Promise<string> {
   if (!response.ok) {
     // Attention : une authentification invalide remonte en HTTP 500, pas 401 — le backend
     // mappe toutes les HmsException sur INTERNAL_SERVER_ERROR. On se fie donc au corps.
-    throw new ApiError(await readErrorMessage(response));
+    throw new ApiError(await readErrorMessage(response), response.status);
   }
 
   const token = (await response.text()).trim();
@@ -120,10 +135,10 @@ export async function apiSend<T = unknown>(
     throw new UnauthorizedError("Votre session a expire. Veuillez vous reconnecter.");
   }
   if (response.status === 403) {
-    throw new ApiError("Vous n'avez pas les droits necessaires pour cette action.");
+    throw new ApiError("Vous n'avez pas les droits necessaires pour cette action.", 403);
   }
   if (!response.ok) {
-    throw new ApiError(await readErrorMessage(response));
+    throw new ApiError(await readErrorMessage(response), response.status);
   }
 
   const raw = (await response.text()).trim();
@@ -164,11 +179,11 @@ export async function apiGet<T>(path: string, token: string): Promise<T> {
   }
 
   if (response.status === 403) {
-    throw new ApiError("Vous n'avez pas les droits necessaires pour consulter ces donnees.");
+    throw new ApiError("Vous n'avez pas les droits necessaires pour consulter ces donnees.", 403);
   }
 
   if (!response.ok) {
-    throw new ApiError(await readErrorMessage(response));
+    throw new ApiError(await readErrorMessage(response), response.status);
   }
 
   // Un corps vide est une reponse valide pour une collection absente cote backend ; on evite
