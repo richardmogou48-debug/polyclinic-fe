@@ -143,12 +143,26 @@ export default function InvoicesSection({
                 <dt className="text-sm font-medium text-secondary-500">Reste à payer</dt>
                 <dd
                   className={`text-base font-semibold tabular-nums ${
-                    solde !== null && solde !== undefined && solde > 0 ? "text-accent-700" : "text-primary-700"
+                    solde !== null && solde !== undefined && solde !== 0
+                      ? "text-accent-700"
+                      : "text-primary-700"
                   }`}
                 >
                   {montant(solde)}
                 </dd>
               </div>
+
+              {/* Un solde negatif est arithmetiquement impossible depuis que BillingService borne
+                  les reglements et la prise en charge. S'il s'en presente un, la facture est
+                  anterieure a cette correction ou a ete ecrite hors du service. Le signaler est
+                  tout l'interet d'avoir laisse getBalanceDue rendre la valeur reelle plutot que de
+                  la ramener a zero : affiche en vert comme un solde nul, il passait inapercu. */}
+              {solde !== null && solde !== undefined && solde < 0 && (
+                <p className="sm:col-span-2 rounded-md border border-accent-500 bg-accent-50 px-3 py-2 text-xs text-accent-700">
+                  Solde négatif : la prise en charge et les règlements dépassent le montant facturé.
+                  Cette facture demande une vérification comptable.
+                </p>
+              )}
             </dl>
 
             {reglements.length > 0 && (
