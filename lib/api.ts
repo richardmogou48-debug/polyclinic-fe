@@ -6,6 +6,13 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000
 
 export class ApiError extends Error {}
 
+/**
+ * Jeton absent, expire ou refuse par la Gateway. Distingue d'ApiError pour que l'appelant
+ * puisse purger la session et renvoyer vers /login, plutot que d'afficher un message d'erreur
+ * sur lequel l'utilisateur ne peut rien.
+ */
+export class UnauthorizedError extends ApiError {}
+
 // La Gateway serialise ses erreurs via ErrorInfo (UserMS/utility/ErrorInfo.java).
 type ErrorInfo = {
   errorMessage?: string;
@@ -66,4 +73,51 @@ export async function login(email: string, password: string): Promise<string> {
   }
 
   return token;
+}
+
+/**
+ * GET authentifie sur la Gateway, qui renvoie du JSON.
+ *
+ * Le jeton part en `Authorization: Bearer` — c'est ce qu'attend GatewayMs/filter/TokenFilter,
+ * qui le verifie puis relaie l'identite aux microservices via X-User-Role et X-Profile-Id. Ce
+ * sont eux qui decident des autorisations fines : un 403 signifie donc que le role n'a pas le
+ * droit sur cette ressource, pas que la session est invalide.
+ */
+export async function apiGet<T>(path: string, token: string): Promise<T> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new ApiError(
+      `Impossible de contacter le serveur (${API_URL}). Verifiez que la Gateway est demarree.`
+    );
+  }
+
+  if (response.status === 401) {
+    throw new UnauthorizedError("Votre session a expire. Veuillez vous reconnecter.");
+  }
+
+  if (response.status === 403) {
+    throw new ApiError("Vous n'avez pas les droits necessaires pour consulter ces donnees.");
+  }
+
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response));
+  }
+
+  // Un corps vide est une reponse valide pour une collection absente cote backend ; on evite
+  // que JSON.parse leve une erreur illisible en le traitant explicitement.
+  const raw = (await response.text()).trim();
+  if (!raw) {
+    throw new ApiError("Le serveur a renvoye une reponse vide.");
+  }
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new ApiError("Le serveur a renvoye une reponse illisible.");
+  }
 }
