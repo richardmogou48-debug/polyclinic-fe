@@ -1,3 +1,5 @@
+import Colombe from "@/components/Colombe";
+
 /**
  * Etat non-nominal d'une section de tableau de bord : chargement, erreur, ou absence de donnee.
  *
@@ -15,6 +17,7 @@ export default function SectionMessage({
   description?: string;
 }) {
   const isError = variant === "error";
+  const enChargement = variant === "loading";
 
   return (
     <div
@@ -28,10 +31,14 @@ export default function SectionMessage({
           : "border-dashed border-neutral-300 bg-white"
       }`}
     >
+      {/* La colombe ne remplace pas le texte, elle l'accompagne : une illustration seule ne dit
+          pas CE QUI charge, et c'est precisement ce que l'utilisateur attend de savoir. */}
+      {enChargement && <Colombe />}
+
       <p
         className={`font-heading text-xl font-semibold ${
           isError ? "text-accent-700" : "text-secondary-500"
-        }`}
+        } ${enChargement ? "mt-2" : ""}`}
       >
         {title}
       </p>
