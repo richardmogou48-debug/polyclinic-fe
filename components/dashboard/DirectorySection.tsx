@@ -33,7 +33,19 @@ const CLASSES_STATUT: Record<string, string> = {
   COMPLETED: "bg-neutral-100 text-neutral-600",
 };
 
-export default function DirectorySection({ annuaire }: { annuaire: Annuaire }) {
+/**
+ * @param cleRafraichissement change de valeur pour forcer un rechargement. C'est ainsi qu'un
+ *        formulaire voisin fait apparaitre ce qu'il vient de creer : sans cela la liste
+ *        afficherait l'etat d'avant l'ecriture, et l'utilisateur croirait son enregistrement
+ *        perdu.
+ */
+export default function DirectorySection({
+  annuaire,
+  cleRafraichissement = 0,
+}: {
+  annuaire: Annuaire;
+  cleRafraichissement?: number;
+}) {
   const etat = useAuthenticatedResource<Donnees>(
     (session) => {
       if (annuaire === "comptes") return fetchUsers(session.token);
@@ -41,7 +53,7 @@ export default function DirectorySection({ annuaire }: { annuaire: Annuaire }) {
       if (annuaire === "patients") return fetchAllPatients(session.token);
       return fetchAllAppointments(session.token);
     },
-    [annuaire]
+    [annuaire, cleRafraichissement]
   );
 
   if (etat.phase === "chargement") {

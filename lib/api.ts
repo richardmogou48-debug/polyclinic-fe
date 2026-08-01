@@ -23,6 +23,12 @@ type ErrorInfo = {
 // qu'on sait rencontrer et on laisse passer les autres tels quels.
 const MESSAGES_FR: Record<string, string> = {
   "Invalid Credentials": "Email ou mot de passe incorrect.",
+  "USER_ALREADY_EXISTS": "Un compte existe déjà avec cette adresse email.",
+  " User Already Exists.": "Un compte existe déjà avec cette adresse email.",
+  "PATIENT_ALREADY_EXISTS": "Ce patient est déjà enregistré.",
+  "DOCTOR_NOT_FOUND": "Le médecin sélectionné est introuvable.",
+  "PATIENT_NOT_FOUND": "Le patient sélectionné est introuvable.",
+  "APPOINTMENT_NOT_MODIFIABLE": "Ce rendez-vous ne peut plus être modifié.",
 };
 
 const readErrorMessage = async (response: Response): Promise<string> => {
@@ -73,6 +79,63 @@ export async function login(email: string, password: string): Promise<string> {
   }
 
   return token;
+}
+
+/**
+ * Ecriture authentifiee : POST ou PUT.
+ *
+ * Renvoie le corps analyse quand il y en a un, `null` sinon — plusieurs routes du backend
+ * repondent une chaine simple (« Appointment Cancelled ») ou rien du tout, et l'appelant n'a
+ * en general que faire du retour : c'est le succes qui l'interesse.
+ *
+ * Le 403 est distingue du reste avec un message qui parle de droits. Attention toutefois :
+ * ProfileMS, Appointment et PharmacyMS transforment encore leurs refus en 500 (leur
+ * ExceptionControllerAdvice attrape Exception.class sans exclure ResponseStatusException), donc
+ * un manque de droit peut y arriver deguise en erreur serveur. Corrige dans UserMS seulement.
+ */
+export async function apiSend<T = unknown>(
+  path: string,
+  token: string,
+  options: { methode?: "POST" | "PUT"; corps?: unknown } = {}
+): Promise<T | null> {
+  const { methode = "POST", corps } = options;
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: methode,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(corps === undefined ? {} : { "Content-Type": "application/json" }),
+      },
+      body: corps === undefined ? undefined : JSON.stringify(corps),
+    });
+  } catch {
+    throw new ApiError(
+      `Impossible de contacter le serveur (${API_URL}). Verifiez que la Gateway est demarree.`
+    );
+  }
+
+  if (response.status === 401) {
+    throw new UnauthorizedError("Votre session a expire. Veuillez vous reconnecter.");
+  }
+  if (response.status === 403) {
+    throw new ApiError("Vous n'avez pas les droits necessaires pour cette action.");
+  }
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response));
+  }
+
+  const raw = (await response.text()).trim();
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    // Reponse texte (« Appointment Cancelled ») : succes, mais rien a exploiter.
+    return null;
+  }
 }
 
 /**
