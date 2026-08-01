@@ -78,6 +78,33 @@ export const fetchPatientProfile = (id: number, token: string) =>
 export const fetchStaffProfile = (id: number, token: string) =>
   apiGet<StaffProfile>(`/profile/staff/get/${id}`, token);
 
+/** Annuaire du personnel. Ouvert a l'administration, l'accueil et les ressources humaines. */
+export const fetchAllStaff = (token: string) => apiGet<StaffProfile[]>("/profile/staff", token);
+
+/** Liste des patients. Ouverte au personnel soignant et a l'accueil, fermee aux patients. */
+export const fetchAllPatients = (token: string) => apiGet<PatientProfile[]>("/profile/patient", token);
+
+/** Annuaire des medecins, ouvert a tout role authentifie. */
+export const fetchAllDoctors = (token: string) => apiGet<DoctorProfile[]>("/profile/doctor", token);
+
+/**
+ * Libelles des roles du personnel, tels que StaffRole les nomme cote ProfileMS. Une valeur
+ * inconnue est rendue telle quelle plutot que masquee.
+ */
+const ROLES_PERSONNEL: Record<string, string> = {
+  ADMIN: "Administrateur",
+  DOCTOR: "Médecin",
+  NURSE: "Infirmier(ère)",
+  PHARMACIST: "Pharmacien(ne)",
+  SECRETARY: "Secrétaire",
+  HR_STAFF: "Ressources humaines",
+  FINANCE_STAFF: "Finance",
+  QUALITY_MANAGER: "Responsable qualité",
+  PATIENT: "Patient",
+};
+
+export const roleLabel = (v: string | null): string => (v ? (ROLES_PERSONNEL[v] ?? v) : "—");
+
 export const champsMedecin = (fiche: DoctorProfile): ChampProfil[] => [
   { libelle: "Nom", valeur: texte(fiche.name) },
   { libelle: "Email", valeur: texte(fiche.email) },

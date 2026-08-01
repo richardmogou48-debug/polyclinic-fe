@@ -1,5 +1,5 @@
 import DashboardPageHeader from "@/components/dashboard/DashboardPageHeader";
-import PlaceholderSection from "@/components/dashboard/PlaceholderSection";
+import DirectorySection from "@/components/dashboard/DirectorySection";
 import { roleConfigs } from "@/lib/navigation";
 
 export default function Page() {
@@ -7,7 +7,7 @@ export default function Page() {
     <>
       <DashboardPageHeader title="Rendez-vous" roleLabel={roleConfigs.secretary.label} />
       <main className="flex-1 px-8 py-6">
-        <PlaceholderSection title="Rendez-vous" description="Planification des rendez-vous." />
+        <DirectorySection annuaire="rendez-vous" />
       </main>
     </>
   );
