@@ -1,5 +1,5 @@
 import DashboardPageHeader from "@/components/dashboard/DashboardPageHeader";
-import PlaceholderSection from "@/components/dashboard/PlaceholderSection";
+import RoomsSection from "@/components/dashboard/RoomsSection";
 import { roleConfigs } from "@/lib/navigation";
 
 export default function Page() {
@@ -7,7 +7,7 @@ export default function Page() {
     <>
       <DashboardPageHeader title="Chambres" roleLabel={roleConfigs.secretary.label} />
       <main className="flex-1 px-8 py-6">
-        <PlaceholderSection title="Chambres" description="Disponibilité des chambres." />
+        <RoomsSection />
       </main>
     </>
   );
