@@ -53,6 +53,10 @@ export type VitalSign = {
   temperature: number | null;
   respiratoryRate: number | null;
   oxygenSaturation: number | null;
+  /** Kilogrammes, BigDecimal cote backend — donc un nombre une fois serialise. */
+  weightKg: number | null;
+  /** Centimetres. L'IMC n'est pas stocke : il se calcule a partir de ces deux mesures. */
+  heightCm: number | null;
   additionalNotes: string | null;
 };
 

@@ -3,7 +3,7 @@
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import { formatAppointmentTime, statusLabel, type Appointment } from "@/lib/appointments";
 import { fetchAllAppointments } from "@/lib/appointments-all";
-import { fetchAllPatients, fetchAllStaff, roleLabel } from "@/lib/profiles";
+import { fetchAllPatients, fetchAllStaff, libelleGroupeSanguin, roleLabel } from "@/lib/profiles";
 import { fetchUsers, type UserSummary } from "@/lib/users";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import type { PatientProfile, StaffProfile } from "@/lib/profiles";
@@ -114,7 +114,9 @@ export default function DirectorySection({
             <td className="px-4 py-3 font-medium text-secondary-500">{patient.name ?? "—"}</td>
             <td className="px-4 py-3 text-neutral-600">{patient.email ?? "—"}</td>
             <td className="whitespace-nowrap px-4 py-3 text-neutral-600">{patient.phone ?? "—"}</td>
-            <td className="whitespace-nowrap px-4 py-3 text-neutral-600">{patient.bloodGroup ?? "—"}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-neutral-600">
+              {libelleGroupeSanguin(patient.bloodGroup)}
+            </td>
             {/* Les allergies sont ce qu'un soignant doit voir en priorite sur une liste. */}
             <td className="px-4 py-3 text-neutral-600">{patient.allergies ?? "—"}</td>
           </tr>

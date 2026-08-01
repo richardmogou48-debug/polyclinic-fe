@@ -18,6 +18,10 @@ export const peutReleverConstantes = (role: Role): boolean => RELEVEURS.has(role
 
 export type ReleveConstantes = {
   bloodPressure?: string | null;
+  /** Kilogrammes. BigDecimal cote backend : la valeur sert au calcul des posologies ponderales. */
+  weightKg?: number | null;
+  /** Centimetres. L'IMC se deduit de ces deux mesures, il n'est pas stocke. */
+  heightCm?: number | null;
   heartRate?: number | null;
   temperature?: number | null;
   respiratoryRate?: number | null;

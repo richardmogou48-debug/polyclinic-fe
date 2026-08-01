@@ -79,7 +79,11 @@ export default function Modal({
           Fermer
         </button>
       </div>
-      {children}
+      {/* Le contenu n'est monte que lorsque la modale s'ouvre. Deux consequences voulues : il
+          n'est pas rendu cote serveur, donc un formulaire peut s'initialiser sur des valeurs
+          disponibles uniquement dans le navigateur — une session, un tirage aleatoire — sans
+          provoquer d'ecart d'hydratation ; et chaque ouverture repart d'un etat neuf. */}
+      {ouverte && children}
     </dialog>
   );
 }
