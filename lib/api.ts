@@ -44,6 +44,10 @@ const MESSAGES_FR: Record<string, string> = {
   "DOCTOR_NOT_FOUND": "Le médecin sélectionné est introuvable.",
   "PATIENT_NOT_FOUND": "Le patient sélectionné est introuvable.",
   "APPOINTMENT_NOT_MODIFIABLE": "Ce rendez-vous ne peut plus être modifié.",
+  "Exam request not found": "La demande d'examen est introuvable.",
+  "Only a pending exam can be scheduled": "Seul un examen en attente peut être programmé.",
+  "The exam belongs to another patient": "Cet examen appartient à un autre patient.",
+  "This exam already has an active appointment": "Cet examen a déjà un rendez-vous : déplacez-le plutôt que d'en ouvrir un second.",
 };
 
 const readErrorMessage = async (response: Response): Promise<string> => {

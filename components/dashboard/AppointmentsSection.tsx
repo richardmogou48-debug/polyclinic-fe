@@ -57,7 +57,8 @@ const REGLAGES: Record<
   patient: {
     charger: fetchAppointmentsByPatient,
     colonne: "Médecin",
-    interlocuteur: (rdv) => rdv.doctorName,
+    // Un rendez-vous d'examen n'a pas de medecin : c'est l'examen qui est le rendez-vous.
+    interlocuteur: (rdv) => (rdv.examLabel ? `Examen — ${rdv.examLabel}` : rdv.doctorName),
     // Le telephone affiche cote medecin est celui du patient : rien d'equivalent a montrer ici,
     // AppointmentDetails ne porte aucun contact du praticien.
     complement: () => null,

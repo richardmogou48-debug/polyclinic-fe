@@ -139,9 +139,12 @@ export default function DirectorySection({
           <td className="px-4 py-3 text-neutral-600">
             {rdv.patientName ?? (rdv.patientId === null ? "—" : `#${rdv.patientId}`)}
           </td>
-          {/* Le nom du medecin n'est pas enrichi par ce service : seule la reference est connue. */}
+          {/* Le nom du medecin n'est pas enrichi par ce service : seule la reference est connue.
+              Un rendez-vous d'examen n'a pas de medecin — la colonne nomme alors le plateau. */}
           <td className="whitespace-nowrap px-4 py-3 text-neutral-600">
-            {rdv.doctorName ?? (rdv.doctorId === null ? "—" : `#${rdv.doctorId}`)}
+            {rdv.examRequestId !== null
+              ? "Plateau technique"
+              : (rdv.doctorName ?? (rdv.doctorId === null ? "—" : `#${rdv.doctorId}`))}
           </td>
           <td className="px-4 py-3 text-neutral-600">{rdv.reason ?? "—"}</td>
           <td className="px-4 py-3">

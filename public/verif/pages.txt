@@ -36,9 +36,11 @@
 /dashboard/imagerie
 /dashboard/imagerie/examens
 /dashboard/imagerie/profil
+/dashboard/imagerie/rendez-vous
 /dashboard/labo
 /dashboard/labo/examens
 /dashboard/labo/profil
+/dashboard/labo/rendez-vous
 /dashboard/nurse
 /dashboard/nurse/accueil
 /dashboard/nurse/chambres

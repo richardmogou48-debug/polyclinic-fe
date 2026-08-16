@@ -27,6 +27,10 @@ export type Appointment = {
   status: AppointmentStatus | null;
   reason: string | null;
   notes: string | null;
+  /** Demande d'examen programmee (MedicalRecordMS) ; null pour une consultation. */
+  examRequestId: number | null;
+  examLabel: string | null;
+  examCategory: string | null;
 };
 
 /** Libelles affichables. Toute valeur inattendue est rendue telle quelle plutot que masquee. */
@@ -99,6 +103,28 @@ export type NouveauRendezVous = {
  */
 export const planifierRendezVous = (rdv: NouveauRendezVous, token: string) =>
   apiSend<number>("/appointment/schedule", token, { corps: rdv });
+
+export type NouveauRendezVousExamen = {
+  patientId: number;
+  /** Demande d'examen a programmer. Le libelle et la categorie viennent du backend, pas d'ici. */
+  examRequestId: number;
+  appointmentTime: string;
+  notes?: string | null;
+};
+
+/**
+ * Programme un examen vers son plateau. Le backend verifie la demande (existante, en attente,
+ * au bon patient, pas deja programmee) et recopie son libelle — le motif affiche partout.
+ */
+export const planifierRendezVousExamen = (rdv: NouveauRendezVousExamen, token: string) =>
+  apiSend<number>("/appointment/exam", token, { corps: rdv });
+
+/**
+ * Le planning des examens, du plus proche au plus lointain. La categorie restreint a un plateau :
+ * le laboratoire demande BIOLOGY, l'imagerie IMAGING. Ouvert aussi a ces deux roles.
+ */
+export const fetchExamAppointments = (token: string, category?: string) =>
+  apiGet<Appointment[]>(`/appointment/exams${category ? `?category=${category}` : ""}`, token);
 
 /**
  * Deplace un rendez-vous.

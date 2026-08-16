@@ -116,6 +116,7 @@ export const roleConfigs: Record<Role, RoleConfig> = {
     navItems: withBase("/dashboard/labo", [
       { slug: "", label: "Vue d'ensemble", description: "Aperçu du laboratoire." },
       { slug: "examens", label: "Examens à réaliser", description: "Analyses de biologie en attente de résultat." },
+      { slug: "rendez-vous", label: "Rendez-vous", description: "Prélèvements et analyses programmés." },
       { slug: "profil", label: "Mon profil", description: "Informations personnelles." },
     ]),
   },
@@ -126,6 +127,7 @@ export const roleConfigs: Record<Role, RoleConfig> = {
     navItems: withBase("/dashboard/imagerie", [
       { slug: "", label: "Vue d'ensemble", description: "Aperçu de l'imagerie." },
       { slug: "examens", label: "Examens à réaliser", description: "Examens d'imagerie en attente de compte rendu." },
+      { slug: "rendez-vous", label: "Rendez-vous", description: "Examens d'imagerie programmés." },
       { slug: "profil", label: "Mon profil", description: "Informations personnelles." },
     ]),
   },
