@@ -100,6 +100,17 @@ export default function InvoicesSection({
               >
                 {invoiceStatusLabel(facture.status)}
               </span>
+              {/* Impression : la page /print/facture sait servir les deux cas — le personnel
+                  par le numero, le patient en retrouvant la facture parmi les siennes via la
+                  route verifiee. Le lien vaut donc pour toutes les portees. */}
+              <a
+                href={`/print/facture/${facture.id}`}
+                target="_blank"
+                rel="noopener"
+                className="whitespace-nowrap text-xs font-medium text-primary-700 underline-offset-2 hover:underline"
+              >
+                Imprimer
+              </a>
             </header>
 
             {postes.length > 0 && (

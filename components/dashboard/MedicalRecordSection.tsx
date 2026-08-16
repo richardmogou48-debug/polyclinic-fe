@@ -99,6 +99,20 @@ export default function MedicalRecordSection({ patientId }: { patientId?: number
         </dl>
       </section>
 
+      {/* Bulletin imprimable : seulement s'il y a au moins un resultat rendu a restituer. */}
+      {consultations.some((entree) => entree.exams?.some((examen) => examen.result)) && (
+        <p className="-mt-4 text-right">
+          <a
+            href={`/print/examens/${dossier.patientId}`}
+            target="_blank"
+            rel="noopener"
+            className="text-sm font-medium text-primary-700 underline-offset-2 hover:underline"
+          >
+            Imprimer les résultats d&apos;examens
+          </a>
+        </p>
+      )}
+
       <Bloc titre="Consultations" compte={consultations.length} vide="Aucune consultation enregistrée.">
         <ol className="flex flex-col gap-4 px-5 py-4">
           {consultations.map((entree) => (

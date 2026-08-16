@@ -88,6 +88,16 @@ export default function PrescriptionsSection({ portee }: { portee: PorteeOrdonna
               {ordonnance.diagnosis && (
                 <span className="ml-auto text-xs text-neutral-600">{ordonnance.diagnosis}</span>
               )}
+              {ordonnance.patientId !== null && (
+                <a
+                  href={`/print/ordonnance/${ordonnance.patientId}/${ordonnance.id}`}
+                  target="_blank"
+                  rel="noopener"
+                  className={`${ordonnance.diagnosis ? "" : "ml-auto "}whitespace-nowrap text-xs font-medium text-primary-700 underline-offset-2 hover:underline`}
+                >
+                  Imprimer
+                </a>
+              )}
             </header>
 
             {lignes.length === 0 ? (

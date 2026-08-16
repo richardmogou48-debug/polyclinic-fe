@@ -107,6 +107,13 @@ export const fetchInvoices = (token: string, status?: InvoiceStatus) =>
   apiGet<Invoice[]>(`/billing/invoice${status ? `?status=${status}` : ""}`, token);
 
 /**
+ * Une facture par son numero. Reservee au personnel : ce chemin ne porte pas d'identifiant de
+ * patient, BillingAccessFilter le refuse donc au role PATIENT — qui passe par ses factures.
+ */
+export const fetchInvoice = (invoiceId: number, token: string) =>
+  apiGet<Invoice>(`/billing/invoice/${invoiceId}`, token);
+
+/**
  * Roles autorises a ecrire en facturation, en miroir de BILLING_STAFF cote BillingAccessFilter.
  *
  * La finance en est absente alors qu'elle LIT tout : elle analyse, elle n'encaisse pas. C'est une
