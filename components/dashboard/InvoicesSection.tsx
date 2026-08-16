@@ -188,6 +188,15 @@ export default function InvoicesSection({
                       {", "}
                       {formatDateTime(reglement.paymentDate)}
                       {reglement.referenceNumber && ` · réf. ${reglement.referenceNumber}`}
+                      {" · "}
+                      <a
+                        href={`/print/recu/${facture.id}/${reglement.id}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="font-medium text-primary-700 underline-offset-2 hover:underline"
+                      >
+                        Reçu
+                      </a>
                     </li>
                   ))}
                 </ul>

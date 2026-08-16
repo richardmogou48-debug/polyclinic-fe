@@ -93,6 +93,69 @@ export function montant(valeur: number | null | undefined): string {
   }).format(valeur);
 }
 
+const UNITES = [
+  "zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+  "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf",
+];
+
+const DIZAINES: Record<number, string> = {
+  2: "vingt", 3: "trente", 4: "quarante", 5: "cinquante", 6: "soixante",
+};
+
+/** 0 a 99 en lettres, regles francaises standard (soixante-dix, quatre-vingt-dix). */
+function moinsDeCent(n: number): string {
+  if (n < 20) return UNITES[n];
+  if (n < 70) {
+    const reste = n % 10;
+    const dizaine = DIZAINES[Math.floor(n / 10)];
+    if (reste === 0) return dizaine;
+    return reste === 1 ? `${dizaine} et un` : `${dizaine}-${UNITES[reste]}`;
+  }
+  if (n < 80) {
+    return n === 71 ? "soixante et onze" : `soixante-${UNITES[n - 60]}`;
+  }
+  return n === 80 ? "quatre-vingts" : `quatre-vingt-${UNITES[n - 80]}`;
+}
+
+/** 0 a 999 en lettres. « cents » prend un s final, pas « cent trois ». */
+function moinsDeMille(n: number): string {
+  if (n < 100) return moinsDeCent(n);
+  const centaines = Math.floor(n / 100);
+  const reste = n % 100;
+  const cent = centaines === 1 ? "cent" : `${UNITES[centaines]} cent`;
+  if (reste === 0) return centaines > 1 ? `${cent}s` : cent;
+  return `${cent} ${moinsDeCent(reste)}`;
+}
+
+/**
+ * Montant en toutes lettres, pour la mention « arrêté le présent reçu à la somme de… » des
+ * documents de caisse. Francs CFA sans centimes ; « mille » est invariable, « million » non.
+ * Couvre jusqu'au milliard non inclus, tres au-dela d'un reglement de caisse plausible.
+ */
+export function montantEnLettres(valeur: number): string {
+  const n = Math.round(Math.abs(valeur));
+  if (n === 0) return "zéro franc CFA";
+
+  const morceaux: string[] = [];
+  const millions = Math.floor(n / 1_000_000);
+  const milliers = Math.floor((n % 1_000_000) / 1000);
+  const reste = n % 1000;
+
+  if (millions > 0) {
+    morceaux.push(`${moinsDeMille(millions)} million${millions > 1 ? "s" : ""}`);
+  }
+  if (milliers > 0) {
+    // « quatre-vingts » et « deux cents » perdent leur s devant « mille ».
+    const motMilliers = moinsDeMille(milliers).replace(/(vingt|cent)s$/, "$1");
+    morceaux.push(milliers === 1 ? "mille" : `${motMilliers} mille`);
+  }
+  if (reste > 0) {
+    morceaux.push(moinsDeMille(reste));
+  }
+
+  return `${morceaux.join(" ")} franc${n > 1 ? "s" : ""} CFA`;
+}
+
 /**
  * Factures d'un patient.
  *

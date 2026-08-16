@@ -12,6 +12,7 @@ import {
   encaisser,
   montant as formaterMontant,
   type Invoice,
+  type Payment,
   type PaymentMethod,
 } from "@/lib/billing";
 
@@ -49,6 +50,8 @@ export default function PaymentForm({
   const [erreurGlobale, setErreurGlobale] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  // Identifiant du reglement qui vient d'etre encaisse : c'est le moment ou le recu se remet.
+  const [dernierReglement, setDernierReglement] = useState<number | null>(null);
 
   const nombreOuNull = (valeur: string): number | null => {
     const propre = valeur.trim().replace(",", ".");
@@ -57,19 +60,23 @@ export default function PaymentForm({
     return Number.isFinite(nombre) && nombre > 0 ? nombre : null;
   };
 
-  const executer = async (action: (token: string) => Promise<unknown>, message: string) => {
+  const executer = async (
+    action: (token: string) => Promise<unknown>,
+    message: string
+  ): Promise<unknown> => {
     const session = readSession();
     if (!session) {
       router.replace("/login");
-      return;
+      return undefined;
     }
     setErreurGlobale(null);
     setSucces(null);
     setEnCours(true);
     try {
-      await action(session.token);
+      const resultat = await action(session.token);
       setSucces(message);
       onEncaisse?.();
+      return resultat;
     } catch (cause) {
       if (cause instanceof UnauthorizedError) {
         clearSession();
@@ -100,7 +107,8 @@ export default function PaymentForm({
       return;
     }
 
-    await executer(
+    setDernierReglement(null);
+    const paiement = (await executer(
       (token) =>
         encaisser(
           facture.id,
@@ -113,7 +121,10 @@ export default function PaymentForm({
           token
         ),
       `Paiement de ${formaterMontant(somme)} enregistré.`
-    );
+    )) as Payment | null | undefined;
+    if (paiement && typeof paiement === "object" && "id" in paiement) {
+      setDernierReglement(paiement.id);
+    }
     setMontantSaisi("");
     setReference("");
   };
@@ -157,6 +168,18 @@ export default function PaymentForm({
         <p className="mt-0.5 text-sm font-medium text-secondary-500">
           Reste à payer {formaterMontant(facture.balanceDue)}
         </p>
+        {dernierReglement !== null && (
+          <p className="mt-2">
+            <a
+              href={`/print/recu/${facture.id}/${dernierReglement}`}
+              target="_blank"
+              rel="noopener"
+              className="text-sm font-medium text-primary-700 underline-offset-2 hover:underline"
+            >
+              Imprimer le reçu de caisse
+            </a>
+          </p>
+        )}
       </div>
 
       <Field id="paiement-montant" label="Montant (FCFA)" requis erreur={erreurMontant}>
