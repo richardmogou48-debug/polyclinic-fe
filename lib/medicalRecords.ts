@@ -234,6 +234,19 @@ export type ExamBillingInfo = {
 export const fetchBillableExams = (patientId: number, token: string) =>
   apiGet<ExamBillingInfo[]>(`/medicalrecord/patient/${patientId}/exams/billable`, token);
 
+/** Intervention vue par la facturation : ni notes operatoires, ni equipe. */
+export type SurgeryBillingInfo = {
+  id: number;
+  patientId: number | null;
+  procedureName: string | null;
+  scheduledDate: string | null;
+  status: SurgeryStatus | null;
+};
+
+/** Interventions facturables d'un patient, pour la ligne de facture SURGERY. */
+export const fetchBillableSurgeries = (patientId: number, token: string) =>
+  apiGet<SurgeryBillingInfo[]>(`/medicalrecord/patient/${patientId}/surgeries/billable`, token);
+
 /** Piece jointe d'un examen : compte rendu (PDF) ou cliche (PNG, JPEG). */
 export type ExamAttachment = {
   id: number;

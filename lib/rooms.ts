@@ -81,6 +81,22 @@ export type CurrentStay = {
 export const fetchCurrentStays = (token: string) => apiGet<CurrentStay[]>("/room/current-stays", token);
 
 /**
+ * Un sejour de l'historique d'un patient, tel que RoomHistory le serialise. Seuls les champs
+ * utiles a la facturation sont types : un sejour sans date de sortie est encore en cours, et
+ * RoomMS refuse d'en calculer la charge.
+ */
+export type PatientStay = {
+  id: number;
+  patientId: number | null;
+  admissionDate: string | null;
+  dischargeDate: string | null;
+};
+
+/** Historique des sejours d'un patient. Le patient n'obtient que le sien. */
+export const fetchPatientStays = (patientId: number, token: string) =>
+  apiGet<PatientStay[]>(`/room/history/patient/${patientId}`, token);
+
+/**
  * Roles autorises a placer, transferer ou faire sortir un patient, en miroir de BED_OPERATORS
  * cote RoomAccessFilter. La secretaire y figure : l'admission est un geste d'accueil autant que
  * de soin.

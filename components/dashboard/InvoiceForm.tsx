@@ -6,14 +6,19 @@ import { Field, controle } from "@/components/form/Field";
 import FormShell from "@/components/form/FormShell";
 import { ApiError, UnauthorizedError } from "@/lib/api";
 import { clearSession, readSession } from "@/lib/auth";
+import { fetchAppointmentsByPatient, type Appointment } from "@/lib/appointments";
 import { ajouterLigne, montant, ouvrirFacture, type NouvelleLigne } from "@/lib/billing";
 import {
   examCategoryLabel,
   fetchBillableExams,
+  fetchBillableSurgeries,
   formatDateTime,
   type ExamBillingInfo,
+  type SurgeryBillingInfo,
 } from "@/lib/medicalRecords";
+import { fetchMedicines, type Medicine } from "@/lib/pharmacy";
 import { fetchAllPatients } from "@/lib/profiles";
+import { fetchPatientStays, type PatientStay } from "@/lib/rooms";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 
 /**
@@ -60,8 +65,8 @@ export default function InvoiceForm({
   const patients = useAuthenticatedResource((session) => fetchAllPatients(session.token));
   const listePatients = patients.phase === "pret" ? patients.donnees : [];
 
-  // Les examens demandes au patient choisi, dans la vue pauvre de la facturation. La liste
-  // n'est qu'une aide a la saisie : son echec ne bloque pas la facture, il prive juste du
+  // Les actes du dossier du patient choisi, chacun dans sa vue de facturation. Ces listes ne
+  // sont qu'une aide a la saisie : leur echec ne bloque pas la facture, il prive juste du
   // raccourci — d'ou l'absence de message d'erreur dedie.
   const examens = useAuthenticatedResource<ExamBillingInfo[]>(
     (session) =>
@@ -70,26 +75,58 @@ export default function InvoiceForm({
   );
   const examensFacturables = examens.phase === "pret" ? examens.donnees : [];
 
+  const interventions = useAuthenticatedResource<SurgeryBillingInfo[]>(
+    (session) =>
+      patientId ? fetchBillableSurgeries(Number(patientId), session.token) : Promise.resolve([]),
+    [patientId]
+  );
+  const interventionsFacturables = interventions.phase === "pret" ? interventions.donnees : [];
+
+  // Seuls les sejours termines sont proposables : RoomMS refuse de chiffrer un sejour en cours.
+  const sejours = useAuthenticatedResource<PatientStay[]>(
+    (session) =>
+      patientId ? fetchPatientStays(Number(patientId), session.token) : Promise.resolve([]),
+    [patientId]
+  );
+  const sejoursFacturables = (sejours.phase === "pret" ? sejours.donnees : []).filter(
+    (sejour) => sejour.dischargeDate !== null
+  );
+
+  // Les rendez-vous d'examen sont ecartes : l'examen se facture par sa propre reference.
+  const consultations = useAuthenticatedResource<Appointment[]>(
+    (session) =>
+      patientId ? fetchAppointmentsByPatient(Number(patientId), session.token) : Promise.resolve([]),
+    [patientId]
+  );
+  const consultationsFacturables = (consultations.phase === "pret" ? consultations.donnees : []).filter(
+    (rdv) => rdv.status !== "CANCELLED" && rdv.examRequestId === null
+  );
+
+  const medicaments = useAuthenticatedResource<Medicine[]>((session) => fetchMedicines(session.token));
+  const listeMedicaments = medicaments.phase === "pret" ? medicaments.donnees : [];
+
   /**
-   * Ajoute une ligne pre-remplie depuis un examen : description, reference, et tarif quand
-   * l'examen vient de la nomenclature — modifiable, la saisie garde le dernier mot. Un examen
-   * en saisie libre n'a pas de tarif a proposer : le prix reste a saisir. Remplace l'unique
-   * ligne encore vierge plutot que de laisser une ligne vide au-dessus.
+   * Ajoute une ligne pre-remplie depuis un acte du dossier. Le prix propose reste modifiable —
+   * la saisie garde le dernier mot, sauf pour le sejour dont RoomMS fait autorite et ecrase
+   * prix et duree a l'enregistrement. Remplace l'unique ligne encore vierge plutot que de
+   * laisser une ligne vide au-dessus.
    */
-  const ajouterExamen = (examen: ExamBillingInfo) =>
+  const ajouterPreremplie = (ligne: Ligne) =>
     setLignes((actuelles) => {
-      const ligne: Ligne = {
-        description: examen.label ?? `Examen ${examen.id}`,
-        unitPrice: examen.price !== null ? String(examen.price) : "",
-        quantity: "1",
-        sourceService: "MEDICAL_RECORD_MS",
-        sourceReferenceId: examen.id,
-      };
       const [premiere] = actuelles;
       if (actuelles.length === 1 && !premiere.description.trim() && !premiere.unitPrice.trim()) {
         return [ligne];
       }
       return [...actuelles, ligne];
+    });
+
+  const ajouterExamen = (examen: ExamBillingInfo) =>
+    ajouterPreremplie({
+      description: examen.label ?? `Examen ${examen.id}`,
+      unitPrice: examen.price !== null ? String(examen.price) : "",
+      quantity: "1",
+      sourceService: "MEDICAL_RECORD_MS",
+      sourceReferenceId: examen.id,
     });
 
   const modifier = (index: number, champ: keyof Ligne, valeur: string) =>
@@ -279,7 +316,7 @@ export default function InvoiceForm({
           </p>
         )}
 
-        <div className="flex flex-wrap items-end gap-3">
+        <div>
           <button
             type="button"
             onClick={() => setLignes((a) => [...a, { ...LIGNE_VIDE }])}
@@ -288,37 +325,185 @@ export default function InvoiceForm({
           >
             Ajouter une ligne
           </button>
+        </div>
 
-          {examensFacturables.length > 0 && (
-            <div className="min-w-56 flex-1">
-              <Field id="facture-examen" label="Ou ajouter un examen demandé au patient">
-                <select
-                  id="facture-examen"
-                  value=""
-                  onChange={(e) => {
-                    const choisi = examensFacturables.find(
-                      (examen) => String(examen.id) === e.target.value
-                    );
-                    if (choisi) ajouterExamen(choisi);
-                  }}
-                  disabled={enCours}
-                  className={controle()}
-                >
-                  <option value="">Choisir un examen…</option>
-                  {examensFacturables.map((examen) => (
-                    <option key={examen.id} value={examen.id}>
-                      {(examen.label ?? `Examen ${examen.id}`) +
-                        " — " +
-                        examCategoryLabel(examen.category) +
-                        " — " +
-                        formatDateTime(examen.requestedAt, false) +
-                        (examen.price !== null ? " — " + montant(examen.price) : "")}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-          )}
+        {/* Toutes les sources facturables du dossier : chaque choix ajoute une ligne referencee,
+            que le backend verifie (patient, annulation, double facturation) et enrichit. */}
+        <div className="grid gap-3 rounded-md border border-neutral-200 bg-white p-3 sm:grid-cols-2">
+          <p className="sm:col-span-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
+            Ajouter depuis le dossier du patient
+          </p>
+
+          <Field id="facture-examen" label="Examen">
+            <select
+              id="facture-examen"
+              value=""
+              onChange={(e) => {
+                const choisi = examensFacturables.find((x) => String(x.id) === e.target.value);
+                if (choisi) ajouterExamen(choisi);
+              }}
+              disabled={enCours || !patientId || examensFacturables.length === 0}
+              className={controle()}
+            >
+              <option value="">
+                {!patientId
+                  ? "Choisissez d'abord le patient"
+                  : examensFacturables.length === 0
+                    ? "Aucun examen"
+                    : "Choisir…"}
+              </option>
+              {examensFacturables.map((examen) => (
+                <option key={examen.id} value={examen.id}>
+                  {(examen.label ?? `Examen ${examen.id}`) +
+                    " — " +
+                    examCategoryLabel(examen.category) +
+                    " — " +
+                    formatDateTime(examen.requestedAt, false) +
+                    (examen.price !== null ? " — " + montant(examen.price) : "")}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field id="facture-intervention" label="Intervention (bloc opératoire)">
+            <select
+              id="facture-intervention"
+              value=""
+              onChange={(e) => {
+                const choisie = interventionsFacturables.find((x) => String(x.id) === e.target.value);
+                if (choisie) {
+                  ajouterPreremplie({
+                    description: choisie.procedureName ?? `Intervention ${choisie.id}`,
+                    unitPrice: "",
+                    quantity: "1",
+                    sourceService: "SURGERY",
+                    sourceReferenceId: choisie.id,
+                  });
+                }
+              }}
+              disabled={enCours || !patientId || interventionsFacturables.length === 0}
+              className={controle()}
+            >
+              <option value="">
+                {!patientId
+                  ? "Choisissez d'abord le patient"
+                  : interventionsFacturables.length === 0
+                    ? "Aucune intervention"
+                    : "Choisir…"}
+              </option>
+              {interventionsFacturables.map((intervention) => (
+                <option key={intervention.id} value={intervention.id}>
+                  {(intervention.procedureName ?? `Intervention ${intervention.id}`) +
+                    " — " +
+                    formatDateTime(intervention.scheduledDate, false)}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field id="facture-sejour" label="Hospitalisation (séjour terminé)">
+            <select
+              id="facture-sejour"
+              value=""
+              onChange={(e) => {
+                const choisi = sejoursFacturables.find((x) => String(x.id) === e.target.value);
+                if (choisi) {
+                  // RoomMS fait autorite : prix par nuit et nombre de nuits seront ecrases a
+                  // l'enregistrement, la ligne part donc a zero sans que cela ne compte.
+                  ajouterPreremplie({
+                    description: `Séjour hospitalier (séjour #${choisi.id})`,
+                    unitPrice: "0",
+                    quantity: "1",
+                    sourceService: "ROOM_MS",
+                    sourceReferenceId: choisi.id,
+                  });
+                }
+              }}
+              disabled={enCours || !patientId || sejoursFacturables.length === 0}
+              className={controle()}
+            >
+              <option value="">
+                {!patientId
+                  ? "Choisissez d'abord le patient"
+                  : sejoursFacturables.length === 0
+                    ? "Aucun séjour terminé"
+                    : "Choisir…"}
+              </option>
+              {sejoursFacturables.map((sejour) => (
+                <option key={sejour.id} value={sejour.id}>
+                  {`Séjour #${sejour.id} — du ${formatDateTime(sejour.admissionDate, false)} au ${formatDateTime(sejour.dischargeDate, false)}`}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field id="facture-consultation" label="Consultation">
+            <select
+              id="facture-consultation"
+              value=""
+              onChange={(e) => {
+                const choisie = consultationsFacturables.find((x) => String(x.id) === e.target.value);
+                if (choisie) {
+                  ajouterPreremplie({
+                    description: `Consultation médicale (rendez-vous #${choisie.id})`,
+                    unitPrice: "",
+                    quantity: "1",
+                    sourceService: "APPOINTMENT",
+                    sourceReferenceId: choisie.id,
+                  });
+                }
+              }}
+              disabled={enCours || !patientId || consultationsFacturables.length === 0}
+              className={controle()}
+            >
+              <option value="">
+                {!patientId
+                  ? "Choisissez d'abord le patient"
+                  : consultationsFacturables.length === 0
+                    ? "Aucune consultation"
+                    : "Choisir…"}
+              </option>
+              {consultationsFacturables.map((rdv) => (
+                <option key={rdv.id} value={rdv.id}>
+                  {formatDateTime(rdv.appointmentTime, false) + (rdv.reason ? ` — ${rdv.reason}` : "")}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="sm:col-span-2">
+            <Field id="facture-medicament" label="Médicament (pharmacie)">
+              <select
+                id="facture-medicament"
+                value=""
+                onChange={(e) => {
+                  const choisi = listeMedicaments.find((x) => String(x.id) === e.target.value);
+                  if (choisi) {
+                    ajouterPreremplie({
+                      description: choisi.name ?? `Médicament ${choisi.id}`,
+                      unitPrice: choisi.unitPrice !== null ? String(choisi.unitPrice) : "",
+                      quantity: "1",
+                      sourceService: "PHARMACY_MS",
+                      sourceReferenceId: choisi.id,
+                    });
+                  }
+                }}
+                disabled={enCours || listeMedicaments.length === 0}
+                className={controle()}
+              >
+                <option value="">
+                  {listeMedicaments.length === 0 ? "Catalogue indisponible" : "Choisir…"}
+                </option>
+                {listeMedicaments.map((medicament) => (
+                  <option key={medicament.id} value={medicament.id}>
+                    {(medicament.name ?? `Médicament ${medicament.id}`) +
+                      (medicament.dosage ? ` ${medicament.dosage}` : "") +
+                      (medicament.unitPrice !== null ? " — " + montant(medicament.unitPrice) : "")}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
         </div>
       </div>
     </FormShell>
