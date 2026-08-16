@@ -32,11 +32,13 @@ export const fetchUsers = (token: string) => apiGet<UserSummary[]>("/user", toke
 export const ROLES_PERSONNEL: [string, string][] = [
   ["DOCTOR", "Médecin"],
   ["NURSE", "Infirmier(ère)"],
-  ["SECRETARY", "Secrétaire"],
+  ["SECRETARY", "Accueil"],
   ["PHARMACIST", "Pharmacien(ne)"],
   ["HR_STAFF", "Ressources humaines"],
   ["FINANCE_STAFF", "Finance"],
   ["QUALITY_MANAGER", "Responsable qualité"],
+  ["LAB_TECHNICIAN", "Technicien(ne) de laboratoire"],
+  ["RADIOLOGIST", "Radiologue"],
   ["ADMIN", "Administrateur"],
 ];
 

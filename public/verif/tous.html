@@ -1,0 +1,107 @@
+<!doctype html><meta charset="utf-8"><title>Controle mobile complet</title>
+<style>
+  body { margin:0; font-family: system-ui; background:#222; color:#eee; }
+  #grille { display:flex; flex-wrap:wrap; gap:10px; padding:10px; }
+  figure { margin:0; }
+  figcaption { font-size:11px; padding:3px 0; }
+  iframe { border:2px solid transparent; background:#fff; }
+  iframe.deborde { border-color:#ff3b30; }
+  #bilan { position:sticky; top:0; background:#000; padding:8px; font:12px/1.5 monospace; white-space:pre; z-index:9; }
+</style>
+<div id="bilan">chargement...</div>
+<div id="grille">
+  <figure><figcaption>/dashboard/accueil</figcaption><iframe data-src="/dashboard/accueil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/accueil/chambres</figcaption><iframe data-src="/dashboard/accueil/chambres" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/accueil/facturation</figcaption><iframe data-src="/dashboard/accueil/facturation" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/accueil/patients</figcaption><iframe data-src="/dashboard/accueil/patients" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/accueil/personnel</figcaption><iframe data-src="/dashboard/accueil/personnel" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/accueil/rendez-vous</figcaption><iframe data-src="/dashboard/accueil/rendez-vous" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin</figcaption><iframe data-src="/dashboard/admin" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/chambres</figcaption><iframe data-src="/dashboard/admin/chambres" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/equipements</figcaption><iframe data-src="/dashboard/admin/equipements" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/facturation</figcaption><iframe data-src="/dashboard/admin/facturation" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/hygiene</figcaption><iframe data-src="/dashboard/admin/hygiene" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/parametres</figcaption><iframe data-src="/dashboard/admin/parametres" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/personnel</figcaption><iframe data-src="/dashboard/admin/personnel" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/pharmacie</figcaption><iframe data-src="/dashboard/admin/pharmacie" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/qualite</figcaption><iframe data-src="/dashboard/admin/qualite" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/rendez-vous</figcaption><iframe data-src="/dashboard/admin/rendez-vous" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/admin/utilisateurs</figcaption><iframe data-src="/dashboard/admin/utilisateurs" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor</figcaption><iframe data-src="/dashboard/doctor" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/consultations</figcaption><iframe data-src="/dashboard/doctor/consultations" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/examens</figcaption><iframe data-src="/dashboard/doctor/examens" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/patients</figcaption><iframe data-src="/dashboard/doctor/patients" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/prescriptions</figcaption><iframe data-src="/dashboard/doctor/prescriptions" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/profil</figcaption><iframe data-src="/dashboard/doctor/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/rendez-vous</figcaption><iframe data-src="/dashboard/doctor/rendez-vous" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/doctor/teleconsultation</figcaption><iframe data-src="/dashboard/doctor/teleconsultation" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/finance</figcaption><iframe data-src="/dashboard/finance" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/finance/facturation</figcaption><iframe data-src="/dashboard/finance/facturation" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/finance/paiements</figcaption><iframe data-src="/dashboard/finance/paiements" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/finance/profil</figcaption><iframe data-src="/dashboard/finance/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/finance/rapports</figcaption><iframe data-src="/dashboard/finance/rapports" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/hr</figcaption><iframe data-src="/dashboard/hr" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/hr/personnel</figcaption><iframe data-src="/dashboard/hr/personnel" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/hr/profil</figcaption><iframe data-src="/dashboard/hr/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/hr/recrutement</figcaption><iframe data-src="/dashboard/hr/recrutement" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/imagerie</figcaption><iframe data-src="/dashboard/imagerie" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/imagerie/examens</figcaption><iframe data-src="/dashboard/imagerie/examens" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/imagerie/profil</figcaption><iframe data-src="/dashboard/imagerie/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/labo</figcaption><iframe data-src="/dashboard/labo" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/labo/examens</figcaption><iframe data-src="/dashboard/labo/examens" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/labo/profil</figcaption><iframe data-src="/dashboard/labo/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse</figcaption><iframe data-src="/dashboard/nurse" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/accueil</figcaption><iframe data-src="/dashboard/nurse/accueil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/chambres</figcaption><iframe data-src="/dashboard/nurse/chambres" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/dossiers</figcaption><iframe data-src="/dashboard/nurse/dossiers" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/examens</figcaption><iframe data-src="/dashboard/nurse/examens" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/patients</figcaption><iframe data-src="/dashboard/nurse/patients" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/nurse/profil</figcaption><iframe data-src="/dashboard/nurse/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient</figcaption><iframe data-src="/dashboard/patient" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient/dossier-medical</figcaption><iframe data-src="/dashboard/patient/dossier-medical" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient/factures</figcaption><iframe data-src="/dashboard/patient/factures" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient/profil</figcaption><iframe data-src="/dashboard/patient/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient/rendez-vous</figcaption><iframe data-src="/dashboard/patient/rendez-vous" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/patient/teleconsultation</figcaption><iframe data-src="/dashboard/patient/teleconsultation" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/pharmacist</figcaption><iframe data-src="/dashboard/pharmacist" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/pharmacist/catalogue</figcaption><iframe data-src="/dashboard/pharmacist/catalogue" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/pharmacist/prescriptions</figcaption><iframe data-src="/dashboard/pharmacist/prescriptions" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/pharmacist/profil</figcaption><iframe data-src="/dashboard/pharmacist/profil" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/pharmacist/stock</figcaption><iframe data-src="/dashboard/pharmacist/stock" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/quality</figcaption><iframe data-src="/dashboard/quality" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/quality/audits</figcaption><iframe data-src="/dashboard/quality/audits" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/quality/incidents</figcaption><iframe data-src="/dashboard/quality/incidents" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/quality/plaintes</figcaption><iframe data-src="/dashboard/quality/plaintes" width="390" height="620"></iframe></figure>
+  <figure><figcaption>/dashboard/quality/profil</figcaption><iframe data-src="/dashboard/quality/profil" width="390" height="620"></iframe></figure>
+</div>
+<script>
+const cadres = [...document.querySelectorAll("iframe")];
+const bilan = document.getElementById("bilan");
+async function charger() {
+  for (let i = 0; i < cadres.length; i += 6) {
+    const vague = cadres.slice(i, i + 6);
+    await Promise.all(vague.map(f => new Promise(r => {
+      f.addEventListener("load", () => setTimeout(r, 1500), { once: true });
+      f.src = f.dataset.src;
+      setTimeout(r, 15000);
+    })));
+    bilan.textContent = "charge " + Math.min(i + 6, cadres.length) + "/" + cadres.length + "...";
+  }
+  mesurer();
+}
+function mesurer() {
+  const mauvais = [];
+  for (const f of cadres) {
+    let w = 0;
+    try { w = f.contentDocument.documentElement.scrollWidth; } catch (e) { w = -1; }
+    if (w > 390) { f.classList.add("deborde"); mauvais.push(f.dataset.src + " -> " + w + "px"); }
+  }
+  window.__bilan = mauvais;
+  bilan.textContent = mauvais.length === 0
+    ? "OK - aucun debordement sur " + cadres.length + " ecrans a 390px"
+    : "DEBORDEMENT sur " + mauvais.length + "/" + cadres.length + " :
+" + mauvais.join("
+");
+}
+charger();
+</script>

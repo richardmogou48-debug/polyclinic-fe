@@ -146,10 +146,12 @@ const ROLES_PERSONNEL: Record<string, string> = {
   DOCTOR: "Médecin",
   NURSE: "Infirmier(ère)",
   PHARMACIST: "Pharmacien(ne)",
-  SECRETARY: "Secrétaire",
+  SECRETARY: "Accueil",
   HR_STAFF: "Ressources humaines",
   FINANCE_STAFF: "Finance",
   QUALITY_MANAGER: "Responsable qualité",
+  LAB_TECHNICIAN: "Technicien(ne) de laboratoire",
+  RADIOLOGIST: "Radiologue",
   PATIENT: "Patient",
 };
 

@@ -19,6 +19,8 @@ const ROLE_BY_BACKEND_NAME: Record<string, Role> = {
   HR_STAFF: "hr",
   FINANCE_STAFF: "finance",
   QUALITY_MANAGER: "quality",
+  LAB_TECHNICIAN: "labo",
+  RADIOLOGIST: "imagerie",
 };
 
 export type Session = {

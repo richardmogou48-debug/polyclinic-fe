@@ -5,7 +5,7 @@ import ExamResultForm from "@/components/dashboard/ExamResultForm";
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import Modal, { BoutonAction } from "@/components/form/Modal";
 import { examCategoryLabel, fetchPendingExams, formatDateTime } from "@/lib/medicalRecords";
-import type { ExamRequestView } from "@/lib/medicalRecords";
+import type { ExamCategory, ExamRequestView } from "@/lib/medicalRecords";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 
 /**
@@ -20,13 +20,14 @@ import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
  * consultation correspondante. C'est ce qui fait de cet ecran un maillon du parcours et non une
  * simple liste.
  */
-export default function PendingExamsWorkspace() {
+export default function PendingExamsWorkspace({ categorie }: { categorie?: ExamCategory }) {
   const [examen, setExamen] = useState<ExamRequestView | null>(null);
   const [rafraichissements, setRafraichissements] = useState(0);
 
+  // Sans categorie, la file entiere (medecin, infirmiere) ; avec, celle du plateau (labo, imagerie).
   const file = useAuthenticatedResource(
-    (session) => fetchPendingExams(session.token),
-    [rafraichissements]
+    (session) => fetchPendingExams(session.token, categorie),
+    [rafraichissements, categorie]
   );
 
   if (file.phase === "chargement") {

@@ -7,6 +7,12 @@ import FormShell from "@/components/form/FormShell";
 import { ApiError, UnauthorizedError } from "@/lib/api";
 import { clearSession, readSession } from "@/lib/auth";
 import { ajouterLigne, ouvrirFacture, type NouvelleLigne } from "@/lib/billing";
+import {
+  examCategoryLabel,
+  fetchBillableExams,
+  formatDateTime,
+  type ExamBillingInfo,
+} from "@/lib/medicalRecords";
 import { fetchAllPatients } from "@/lib/profiles";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 
@@ -22,7 +28,14 @@ import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
  * etablis par le backend ; les calculer aussi cote client creerait deux verites possibles pour un
  * meme montant, et c'est toujours celle affichee qui serait crue.
  */
-type Ligne = { description: string; unitPrice: string; quantity: string };
+type Ligne = {
+  description: string;
+  unitPrice: string;
+  quantity: string;
+  /** Presents quand la ligne vient d'un examen du patient : la reference part au backend, qui verifie et enrichit. */
+  sourceService?: string;
+  sourceReferenceId?: number;
+};
 
 const LIGNE_VIDE: Ligne = { description: "", unitPrice: "", quantity: "1" };
 
@@ -46,6 +59,37 @@ export default function InvoiceForm({
 
   const patients = useAuthenticatedResource((session) => fetchAllPatients(session.token));
   const listePatients = patients.phase === "pret" ? patients.donnees : [];
+
+  // Les examens demandes au patient choisi, dans la vue pauvre de la facturation. La liste
+  // n'est qu'une aide a la saisie : son echec ne bloque pas la facture, il prive juste du
+  // raccourci — d'ou l'absence de message d'erreur dedie.
+  const examens = useAuthenticatedResource<ExamBillingInfo[]>(
+    (session) =>
+      patientId ? fetchBillableExams(Number(patientId), session.token) : Promise.resolve([]),
+    [patientId]
+  );
+  const examensFacturables = examens.phase === "pret" ? examens.donnees : [];
+
+  /**
+   * Ajoute une ligne pre-remplie depuis un examen : description et reference posees, prix a
+   * saisir — aucune nomenclature tarifaire n'existe. Remplace l'unique ligne encore vierge
+   * plutot que de laisser une ligne vide au-dessus.
+   */
+  const ajouterExamen = (examen: ExamBillingInfo) =>
+    setLignes((actuelles) => {
+      const ligne: Ligne = {
+        description: examen.label ?? `Examen ${examen.id}`,
+        unitPrice: "",
+        quantity: "1",
+        sourceService: "MEDICAL_RECORD_MS",
+        sourceReferenceId: examen.id,
+      };
+      const [premiere] = actuelles;
+      if (actuelles.length === 1 && !premiere.description.trim() && !premiere.unitPrice.trim()) {
+        return [ligne];
+      }
+      return [...actuelles, ligne];
+    });
 
   const modifier = (index: number, champ: keyof Ligne, valeur: string) =>
     setLignes((actuelles) =>
@@ -80,10 +124,11 @@ export default function InvoiceForm({
         unitPrice: prix,
         quantity: quantite,
         // NOT NULL en base, et l'omettre faisait echouer l'ajout sur une violation de contrainte
-        // rendue en erreur 500. La valeur dit la verite sur l'origine de la ligne : saisie a
-        // l'accueil, et non generee par un service. Un NULL aurait signifie « origine inconnue »,
-        // ce qui n'est pas la meme chose.
-        sourceService: "MANUAL",
+        // rendue en erreur 500. La valeur dit la verite sur l'origine de la ligne : MANUAL pour
+        // une saisie libre a l'accueil, MEDICAL_RECORD_MS quand la ligne reference un examen —
+        // le backend verifie alors la reference (patient, non annule) et complete la description.
+        sourceService: ligne.sourceService ?? "MANUAL",
+        sourceReferenceId: ligne.sourceReferenceId ?? null,
       });
     }
     setErreurLignes(undefined);
@@ -233,7 +278,7 @@ export default function InvoiceForm({
           </p>
         )}
 
-        <div>
+        <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"
             onClick={() => setLignes((a) => [...a, { ...LIGNE_VIDE }])}
@@ -242,6 +287,36 @@ export default function InvoiceForm({
           >
             Ajouter une ligne
           </button>
+
+          {examensFacturables.length > 0 && (
+            <div className="min-w-56 flex-1">
+              <Field id="facture-examen" label="Ou ajouter un examen demandé au patient">
+                <select
+                  id="facture-examen"
+                  value=""
+                  onChange={(e) => {
+                    const choisi = examensFacturables.find(
+                      (examen) => String(examen.id) === e.target.value
+                    );
+                    if (choisi) ajouterExamen(choisi);
+                  }}
+                  disabled={enCours}
+                  className={controle()}
+                >
+                  <option value="">Choisir un examen…</option>
+                  {examensFacturables.map((examen) => (
+                    <option key={examen.id} value={examen.id}>
+                      {(examen.label ?? `Examen ${examen.id}`) +
+                        " — " +
+                        examCategoryLabel(examen.category) +
+                        " — " +
+                        formatDateTime(examen.requestedAt, false)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
         </div>
       </div>
     </FormShell>

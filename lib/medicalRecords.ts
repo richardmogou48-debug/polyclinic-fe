@@ -215,13 +215,37 @@ export const fetchExamsByPatient = (patientId: number, token: string) =>
   apiGet<ExamRequestView[]>(`/medicalrecord/patient/${patientId}/exams`, token);
 
 /**
+ * Examen vu par la facturation : la vue pauvre servie a l'accueil — ni indication clinique,
+ * ni resultat. Le dossier medical complet lui reste ferme.
+ */
+export type ExamBillingInfo = {
+  id: number;
+  patientId: number | null;
+  category: ExamCategory | null;
+  label: string | null;
+  requestedAt: string | null;
+  urgent: boolean;
+  status: ExamStatus | null;
+};
+
+/** Examens facturables d'un patient : toutes ses demandes sauf les annulees. */
+export const fetchBillableExams = (patientId: number, token: string) =>
+  apiGet<ExamBillingInfo[]>(`/medicalrecord/patient/${patientId}/exams/billable`, token);
+
+/**
  * File du plateau technique : les examens qui n'ont pas rendu, urgents d'abord.
  *
  * Contrairement a la file des ordonnances, celle-ci dit reellement « ce qui reste a faire » : la
  * demande porte un statut, et il bascule a l'enregistrement du resultat.
+ *
+ * La categorie restreint la file a un plateau — biologie pour le laboratoire, imagerie pour la
+ * radio. Omise, la file entiere : l'ecran du medecin et de l'infirmiere.
  */
-export const fetchPendingExams = (token: string) =>
-  apiGet<ExamRequestView[]>("/medicalrecord/exams/pending", token);
+export const fetchPendingExams = (token: string, category?: ExamCategory) =>
+  apiGet<ExamRequestView[]>(
+    category ? `/medicalrecord/exams/pending?category=${category}` : "/medicalrecord/exams/pending",
+    token
+  );
 
 /**
  * Formate un LocalDateTime Java. Renvoie la valeur brute si elle n'est pas analysable : mieux

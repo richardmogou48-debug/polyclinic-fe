@@ -6,7 +6,7 @@ import { fetchAppointmentsByDoctor, fetchAppointmentsByPatient, type Appointment
 import { fetchAllAppointments } from "@/lib/appointments-all";
 import { fetchInvoices, fetchInvoicesByPatient, montant, type Invoice } from "@/lib/billing";
 import { fetchCleaningTasks, fetchEquipment } from "@/lib/facilities";
-import { fetchRecentPrescriptions } from "@/lib/medicalRecords";
+import { fetchPendingExams, fetchRecentPrescriptions } from "@/lib/medicalRecords";
 import { fetchMedicines } from "@/lib/pharmacy";
 import { fetchAllPatients, fetchAllStaff } from "@/lib/profiles";
 import { fetchAudits, fetchComplaints, fetchIncidents } from "@/lib/quality";
@@ -106,6 +106,22 @@ async function tuilesPour(role: Role, session: Session): Promise<Tuile[]> {
         value: nombre(nonReglees),
         ton: nonReglees > 0 ? "attention" : "neutre",
         mention: nonReglees > 0 ? "à suivre" : undefined,
+      },
+    ];
+  }
+
+  if (role === "labo" || role === "imagerie") {
+    // Le plateau ne lit pas les dossiers : son seul indicateur est sa propre file, deja filtree
+    // par categorie cote backend.
+    const file = await fetchPendingExams(t, role === "labo" ? "BIOLOGY" : "IMAGING");
+    const urgents = file.filter((examen) => examen.urgent).length;
+    return [
+      { label: "Examens en attente", value: nombre(file.length) },
+      {
+        label: "Urgents",
+        value: nombre(urgents),
+        ton: urgents > 0 ? "critique" : "neutre",
+        mention: urgents > 0 ? "avant sortie du patient" : undefined,
       },
     ];
   }

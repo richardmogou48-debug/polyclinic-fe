@@ -4,6 +4,8 @@ export type Role =
   | "nurse"
   | "pharmacist"
   | "secretary"
+  | "labo"
+  | "imagerie"
   | "hr"
   | "finance"
   | "quality"
@@ -93,15 +95,38 @@ export const roleConfigs: Record<Role, RoleConfig> = {
   },
   secretary: {
     role: "secretary",
-    label: "Secrétaire",
-    basePath: "/dashboard/secretary",
-    navItems: withBase("/dashboard/secretary", [
+    label: "Accueil",
+    basePath: "/dashboard/accueil",
+    navItems: withBase("/dashboard/accueil", [
       { slug: "", label: "Vue d'ensemble", description: "Aperçu de l'accueil." },
       { slug: "rendez-vous", label: "Rendez-vous", description: "Planification des rendez-vous." },
       { slug: "patients", label: "Patients", description: "Enregistrement et recherche de patients." },
       { slug: "facturation", label: "Facturation", description: "Factures et paiements." },
       { slug: "chambres", label: "Chambres", description: "Disponibilité des chambres." },
       { slug: "personnel", label: "Personnel", description: "Annuaire du personnel." },
+    ]),
+  },
+  // Les deux plateaux techniques partagent la meme forme : leur ecran de travail est la file des
+  // examens de leur categorie, rien d'autre. Le detail clinique reste dans le dossier, que ces
+  // roles ne lisent pas.
+  labo: {
+    role: "labo",
+    label: "Laboratoire",
+    basePath: "/dashboard/labo",
+    navItems: withBase("/dashboard/labo", [
+      { slug: "", label: "Vue d'ensemble", description: "Aperçu du laboratoire." },
+      { slug: "examens", label: "Examens à réaliser", description: "Analyses de biologie en attente de résultat." },
+      { slug: "profil", label: "Mon profil", description: "Informations personnelles." },
+    ]),
+  },
+  imagerie: {
+    role: "imagerie",
+    label: "Imagerie médicale",
+    basePath: "/dashboard/imagerie",
+    navItems: withBase("/dashboard/imagerie", [
+      { slug: "", label: "Vue d'ensemble", description: "Aperçu de l'imagerie." },
+      { slug: "examens", label: "Examens à réaliser", description: "Examens d'imagerie en attente de compte rendu." },
+      { slug: "profil", label: "Mon profil", description: "Informations personnelles." },
     ]),
   },
   hr: {
