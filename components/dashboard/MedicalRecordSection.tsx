@@ -178,6 +178,16 @@ export default function MedicalRecordSection({ patientId }: { patientId?: number
                   </p>
                   {entree.prescriptions.map((ordonnance) => (
                     <div key={ordonnance.id} className="mt-1">
+                      <p className="text-right">
+                        <a
+                          href={`/print/ordonnance/${dossier.patientId}/${ordonnance.id}`}
+                          target="_blank"
+                          rel="noopener"
+                          className="text-xs font-medium text-primary-700 underline-offset-2 hover:underline"
+                        >
+                          Imprimer l&apos;ordonnance
+                        </a>
+                      </p>
                       <ul className="flex flex-col gap-1">
                         {(ordonnance.items ?? []).map((ligne) => (
                           <li key={ligne.id} className="text-sm text-secondary-500">

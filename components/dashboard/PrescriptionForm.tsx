@@ -32,11 +32,14 @@ const LIGNE_VIDE: Ligne = { medicineName: "", dosage: "", duration: "" };
 
 export default function PrescriptionForm({
   entryId,
+  patientId = null,
   examensEnAttente = false,
   onPrescrit,
   dansModale = false,
 }: {
   entryId: number;
+  /** Fiche du patient : permet d'offrir l'impression de l'ordonnance des sa creation. */
+  patientId?: number | null;
   /** Confort d'affichage seulement : le refus fait autorite, pas ce drapeau. */
   examensEnAttente?: boolean;
   onPrescrit?: () => void;
@@ -54,6 +57,8 @@ export default function PrescriptionForm({
   const [erreurGlobale, setErreurGlobale] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  // Identifiant de l'ordonnance qui vient d'etre creee : c'est la que l'impression s'offre.
+  const [derniereOrdonnance, setDerniereOrdonnance] = useState<number | null>(null);
 
   // Le catalogue n'est qu'une aide a la saisie : son echec ne doit pas empecher de prescrire.
   // L'etat « erreur » est donc traite comme une absence de suggestions, sans message.
@@ -116,14 +121,18 @@ export default function PrescriptionForm({
     });
 
     setEnCours(true);
+    setDerniereOrdonnance(null);
     try {
-      await prescrire(
+      const creee = await prescrire(
         entryId,
         { items, derogationMotif: derogationRequise ? derogationMotif.trim() : null },
         session.token
       );
 
       setSucces(`Ordonnance enregistrée — ${items.length} médicament${items.length > 1 ? "s" : ""}.`);
+      if (creee && typeof creee === "object" && "id" in creee) {
+        setDerniereOrdonnance(creee.id);
+      }
       setLignes([{ ...LIGNE_VIDE }]);
       setDerogationMotif("");
       setDerogationRequise(false);
@@ -162,6 +171,20 @@ export default function PrescriptionForm({
       succes={succes}
       onSubmit={soumettre}
     >
+      {/* L'ordonnance se remet en main propre : le lien d'impression apparait des sa creation. */}
+      {derniereOrdonnance !== null && patientId !== null && (
+        <p className="sm:col-span-2 -mt-1">
+          <a
+            href={`/print/ordonnance/${patientId}/${derniereOrdonnance}`}
+            target="_blank"
+            rel="noopener"
+            className="text-sm font-medium text-primary-700 underline-offset-2 hover:underline"
+          >
+            Imprimer l&apos;ordonnance
+          </a>
+        </p>
+      )}
+
       {/* Le catalogue alimente les suggestions de toutes les lignes : un seul datalist suffit. */}
       <datalist id="catalogue-medicaments">
         {medicaments.map((medicament) => (

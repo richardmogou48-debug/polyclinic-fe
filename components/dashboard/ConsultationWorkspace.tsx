@@ -278,6 +278,7 @@ export default function ConsultationWorkspace() {
             <PrescriptionForm
               dansModale
               entryId={entreeId}
+              patientId={patientId}
               examensEnAttente={examensEnAttente}
               onPrescrit={rafraichir}
             />
