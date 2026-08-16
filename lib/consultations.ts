@@ -63,6 +63,8 @@ export type NouvelleDemandeExamen = {
   label: string;
   clinicalIndication?: string | null;
   urgent: boolean;
+  /** Acte de la nomenclature. Present, le backend en reprend le libelle et la categorie. */
+  catalogItemId?: number | null;
 };
 
 /**

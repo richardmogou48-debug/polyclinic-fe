@@ -174,6 +174,7 @@ export const roleConfigs: Record<Role, RoleConfig> = {
       { slug: "rendez-vous", label: "Rendez-vous", description: "Tous les rendez-vous." },
       { slug: "facturation", label: "Facturation", description: "Facturation globale." },
       { slug: "pharmacie", label: "Pharmacie", description: "Catalogue et stock." },
+      { slug: "nomenclature", label: "Nomenclature", description: "Actes d'examens et tarifs." },
       { slug: "chambres", label: "Chambres", description: "Gestion des chambres." },
       { slug: "equipements", label: "Équipements", description: "Parc d'équipements médicaux." },
       { slug: "qualite", label: "Qualité", description: "Plaintes, incidents, audits." },

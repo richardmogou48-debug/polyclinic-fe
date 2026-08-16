@@ -4,7 +4,7 @@
 // les collections d'un dossier neuf arrivent a `null` et non a `[]`, et les champs non renseignes
 // arrivent a `null`. Tout ce fichier traite donc le null comme un cas nominal, pas comme une erreur.
 
-import { apiGet } from "@/lib/api";
+import { apiGet, apiSend } from "@/lib/api";
 
 /** Sérialisé en chaine (@Enumerated(EnumType.STRING)), contrairement au statut des rendez-vous. */
 export type SurgeryStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
@@ -226,11 +226,48 @@ export type ExamBillingInfo = {
   requestedAt: string | null;
   urgent: boolean;
   status: ExamStatus | null;
+  /** Tarif de la nomenclature quand l'examen y est rattache, null pour une saisie libre. */
+  price: number | null;
 };
 
 /** Examens facturables d'un patient : toutes ses demandes sauf les annulees. */
 export const fetchBillableExams = (patientId: number, token: string) =>
   apiGet<ExamBillingInfo[]>(`/medicalrecord/patient/${patientId}/exams/billable`, token);
+
+/**
+ * Acte de la nomenclature tarifaire. Le libelle et la categorie font foi quand une demande le
+ * reference ; le prix (en FCFA) est celui que la facturation applique, et que l'administration
+ * peut modifier.
+ */
+export type ExamCatalogItem = {
+  id: number;
+  label: string | null;
+  category: ExamCategory | null;
+  price: number | null;
+  active: boolean;
+};
+
+/** La nomenclature : actifs seuls par defaut, entiere avec all pour l'ecran d'administration. */
+export const fetchExamCatalog = (token: string, all = false) =>
+  apiGet<ExamCatalogItem[]>(`/medicalrecord/exam-catalog${all ? "?all=true" : ""}`, token);
+
+export type NouvelActe = {
+  label: string;
+  category: ExamCategory;
+  price: number;
+  active?: boolean;
+};
+
+/** Ajoute un acte a la nomenclature. Reserve a l'administration cote backend. */
+export const creerActeCatalogue = (acte: NouvelActe, token: string) =>
+  apiSend<ExamCatalogItem>("/medicalrecord/exam-catalog", token, { corps: acte });
+
+/** Modifie un acte — c'est par ici que le tarif s'ajuste. L'acte part entier. */
+export const majActeCatalogue = (id: number, acte: NouvelActe, token: string) =>
+  apiSend<ExamCatalogItem>(`/medicalrecord/exam-catalog/${id}`, token, {
+    corps: acte,
+    methode: "PUT",
+  });
 
 /**
  * File du plateau technique : les examens qui n'ont pas rendu, urgents d'abord.

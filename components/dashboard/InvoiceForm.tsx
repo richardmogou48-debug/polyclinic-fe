@@ -6,7 +6,7 @@ import { Field, controle } from "@/components/form/Field";
 import FormShell from "@/components/form/FormShell";
 import { ApiError, UnauthorizedError } from "@/lib/api";
 import { clearSession, readSession } from "@/lib/auth";
-import { ajouterLigne, ouvrirFacture, type NouvelleLigne } from "@/lib/billing";
+import { ajouterLigne, montant, ouvrirFacture, type NouvelleLigne } from "@/lib/billing";
 import {
   examCategoryLabel,
   fetchBillableExams,
@@ -71,15 +71,16 @@ export default function InvoiceForm({
   const examensFacturables = examens.phase === "pret" ? examens.donnees : [];
 
   /**
-   * Ajoute une ligne pre-remplie depuis un examen : description et reference posees, prix a
-   * saisir — aucune nomenclature tarifaire n'existe. Remplace l'unique ligne encore vierge
-   * plutot que de laisser une ligne vide au-dessus.
+   * Ajoute une ligne pre-remplie depuis un examen : description, reference, et tarif quand
+   * l'examen vient de la nomenclature — modifiable, la saisie garde le dernier mot. Un examen
+   * en saisie libre n'a pas de tarif a proposer : le prix reste a saisir. Remplace l'unique
+   * ligne encore vierge plutot que de laisser une ligne vide au-dessus.
    */
   const ajouterExamen = (examen: ExamBillingInfo) =>
     setLignes((actuelles) => {
       const ligne: Ligne = {
         description: examen.label ?? `Examen ${examen.id}`,
-        unitPrice: "",
+        unitPrice: examen.price !== null ? String(examen.price) : "",
         quantity: "1",
         sourceService: "MEDICAL_RECORD_MS",
         sourceReferenceId: examen.id,
@@ -310,7 +311,8 @@ export default function InvoiceForm({
                         " — " +
                         examCategoryLabel(examen.category) +
                         " — " +
-                        formatDateTime(examen.requestedAt, false)}
+                        formatDateTime(examen.requestedAt, false) +
+                        (examen.price !== null ? " — " + montant(examen.price) : "")}
                     </option>
                   ))}
                 </select>

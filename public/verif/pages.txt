@@ -9,6 +9,7 @@
 /dashboard/admin/equipements
 /dashboard/admin/facturation
 /dashboard/admin/hygiene
+/dashboard/admin/nomenclature
 /dashboard/admin/parametres
 /dashboard/admin/personnel
 /dashboard/admin/pharmacie
