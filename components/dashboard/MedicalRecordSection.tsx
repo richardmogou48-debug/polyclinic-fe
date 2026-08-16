@@ -1,5 +1,6 @@
 "use client";
 
+import ExamAttachments from "@/components/dashboard/ExamAttachments";
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import { useAuthenticatedResource } from "@/lib/useAuthenticatedResource";
 import {
@@ -145,6 +146,9 @@ export default function MedicalRecordSection({ patientId }: { patientId?: number
                         ) : (
                           <p className="mt-0.5 text-neutral-500">{examStatusLabel(examen.status)}</p>
                         )}
+                        {/* Comptes rendus et cliches deposes par le plateau. Le composant se
+                            tait quand il n'y a rien : une ligne vide par examen serait du bruit. */}
+                        <ExamAttachments examId={examen.id} />
                       </li>
                     ))}
                   </ul>

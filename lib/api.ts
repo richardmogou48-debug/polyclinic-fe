@@ -154,6 +154,87 @@ export async function apiSend<T = unknown>(
 }
 
 /**
+ * Televersement authentifie d'un fichier, en multipart.
+ *
+ * Le Content-Type n'est pas pose a la main : c'est le navigateur qui l'ecrit, avec la frontiere
+ * multipart qu'il a choisie — le forcer casserait la requete.
+ */
+export async function apiUpload<T = unknown>(
+  path: string,
+  token: string,
+  fichier: File,
+  champ = "file"
+): Promise<T | null> {
+  const donnees = new FormData();
+  donnees.append(champ, fichier);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: donnees,
+    });
+  } catch {
+    throw new ApiError(
+      `Impossible de contacter le serveur (${API_URL}). Verifiez que la Gateway est demarree.`
+    );
+  }
+
+  if (response.status === 401) {
+    throw new UnauthorizedError("Votre session a expire. Veuillez vous reconnecter.");
+  }
+  if (response.status === 403) {
+    throw new ApiError("Vous n'avez pas les droits necessaires pour cette action.", 403);
+  }
+  if (response.status === 413) {
+    throw new ApiError("Le fichier est trop volumineux (20 Mo maximum).", 413);
+  }
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response), response.status);
+  }
+
+  const raw = (await response.text()).trim();
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * GET authentifie qui renvoie le corps brut (PDF, image). Le jeton part en en-tete : une simple
+ * balise <a href> ne saurait pas le porter, d'ou le passage par fetch et un blob.
+ */
+export async function apiBlob(path: string, token: string): Promise<Blob> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new ApiError(
+      `Impossible de contacter le serveur (${API_URL}). Verifiez que la Gateway est demarree.`
+    );
+  }
+
+  if (response.status === 401) {
+    throw new UnauthorizedError("Votre session a expire. Veuillez vous reconnecter.");
+  }
+  if (response.status === 403) {
+    throw new ApiError("Vous n'avez pas les droits necessaires pour consulter ce fichier.", 403);
+  }
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response), response.status);
+  }
+
+  return response.blob();
+}
+
+/**
  * GET authentifie sur la Gateway, qui renvoie du JSON.
  *
  * Le jeton part en `Authorization: Bearer` — c'est ce qu'attend GatewayMs/filter/TokenFilter,

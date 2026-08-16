@@ -4,7 +4,7 @@
 // les collections d'un dossier neuf arrivent a `null` et non a `[]`, et les champs non renseignes
 // arrivent a `null`. Tout ce fichier traite donc le null comme un cas nominal, pas comme une erreur.
 
-import { apiGet, apiSend } from "@/lib/api";
+import { apiBlob, apiGet, apiSend, apiUpload } from "@/lib/api";
 
 /** Sérialisé en chaine (@Enumerated(EnumType.STRING)), contrairement au statut des rendez-vous. */
 export type SurgeryStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
@@ -233,6 +233,47 @@ export type ExamBillingInfo = {
 /** Examens facturables d'un patient : toutes ses demandes sauf les annulees. */
 export const fetchBillableExams = (patientId: number, token: string) =>
   apiGet<ExamBillingInfo[]>(`/medicalrecord/patient/${patientId}/exams/billable`, token);
+
+/** Piece jointe d'un examen : compte rendu (PDF) ou cliche (PNG, JPEG). */
+export type ExamAttachment = {
+  id: number;
+  fileName: string | null;
+  contentType: string | null;
+  sizeBytes: number | null;
+  uploadedBy: number | null;
+  uploadedAt: string | null;
+};
+
+/** Les pieces d'un examen. Le patient n'obtient que celles de son propre dossier. */
+export const fetchExamAttachments = (examId: number, token: string) =>
+  apiGet<ExamAttachment[]>(`/medicalrecord/exam/${examId}/attachments`, token);
+
+/** Depose un compte rendu ou un cliche sur un examen. Reserve a ceux qui rendent les resultats. */
+export const televerserPieceExamen = (examId: number, fichier: File, token: string) =>
+  apiUpload<ExamAttachment>(`/medicalrecord/exam/${examId}/attachment`, token, fichier);
+
+/**
+ * Ouvre une piece dans un nouvel onglet. Le fichier passe par fetch — une balise <a> ne sait pas
+ * porter le jeton — puis par un blob dont l'URL est revoquee une fois l'onglet servi.
+ */
+export async function ouvrirPieceExamen(piece: ExamAttachment, token: string): Promise<void> {
+  const blob = await apiBlob(`/medicalrecord/attachment/${piece.id}/file`, token);
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener");
+  // Revocation differee : la revoquer tout de suite couperait le chargement de l'onglet.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** Taille lisible d'une piece : « 1,3 Mo », « 480 Ko ». */
+export function tailleLisible(octets: number | null): string {
+  if (octets === null || octets < 0) {
+    return "—";
+  }
+  if (octets < 1024 * 1024) {
+    return `${Math.max(1, Math.round(octets / 1024))} Ko`;
+  }
+  return `${(octets / (1024 * 1024)).toFixed(1).replace(".", ",")} Mo`;
+}
 
 /**
  * Acte de la nomenclature tarifaire. Le libelle et la categorie font foi quand une demande le

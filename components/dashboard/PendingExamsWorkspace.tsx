@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ExamAttachments from "@/components/dashboard/ExamAttachments";
 import ExamResultForm from "@/components/dashboard/ExamResultForm";
 import SectionMessage from "@/components/dashboard/SectionMessage";
 import Modal, { BoutonAction } from "@/components/form/Modal";
@@ -119,7 +120,13 @@ export default function PendingExamsWorkspace({ categorie }: { categorie?: ExamC
         }}
       >
         {examen && (
-          <ExamResultForm dansModale examId={examen.id} libelleExamen={examen.label ?? undefined} />
+          <>
+            <ExamResultForm dansModale examId={examen.id} libelleExamen={examen.label ?? undefined} />
+            {/* Le depot est independant du resultat : le cliche peut preceder la conclusion. */}
+            <div className="mt-4 border-t border-neutral-200 pt-4">
+              <ExamAttachments examId={examen.id} depot />
+            </div>
+          </>
         )}
       </Modal>
     </>
