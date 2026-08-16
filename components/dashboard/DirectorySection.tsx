@@ -128,7 +128,7 @@ export default function DirectorySection({
   const rendezVous = etat.donnees as Appointment[];
   return (
     <Tableau
-      colonnes={["Date et heure", "Patient", "Médecin", "Motif", "Statut"]}
+      colonnes={["Date et heure", "Patient", "Médecin", "Motif", "Statut", "Document"]}
       legende="Rendez-vous de l'établissement"
     >
       {rendezVous.map((rdv) => (
@@ -155,6 +155,16 @@ export default function DirectorySection({
             >
               {statusLabel(rdv.status)}
             </span>
+          </td>
+          <td className="whitespace-nowrap px-4 py-3">
+            <a
+              href={`/print/convocation/${rdv.id}`}
+              target="_blank"
+              rel="noopener"
+              className="text-xs font-medium text-primary-700 underline-offset-2 hover:underline"
+            >
+              Convocation
+            </a>
           </td>
         </tr>
       ))}

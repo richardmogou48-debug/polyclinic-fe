@@ -46,6 +46,8 @@ export default function AppointmentForm({
   const [erreurGlobale, setErreurGlobale] = useState<string | null>(null);
   const [succes, setSucces] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  // Identifiant du rendez-vous qui vient d'etre pris : c'est la que la convocation se remet.
+  const [dernierRdv, setDernierRdv] = useState<number | null>(null);
 
   const patients = useAuthenticatedResource((session) => fetchAllPatients(session.token));
   const medecins = useAuthenticatedResource((session) => fetchAllDoctors(session.token));
@@ -85,9 +87,11 @@ export default function AppointmentForm({
     }
 
     setEnCours(true);
+    setDernierRdv(null);
     try {
+      let cree: number | null;
       if (typeRdv === "examen") {
-        await planifierRendezVousExamen(
+        cree = await planifierRendezVousExamen(
           {
             patientId: Number(patientId),
             examRequestId: Number(examId),
@@ -97,7 +101,7 @@ export default function AppointmentForm({
           session.token
         );
       } else {
-        await planifierRendezVous(
+        cree = await planifierRendezVous(
           {
             patientId: Number(patientId),
             doctorId: Number(doctorId),
@@ -107,6 +111,9 @@ export default function AppointmentForm({
           },
           session.token
         );
+      }
+      if (typeof cree === "number") {
+        setDernierRdv(cree);
       }
 
       setSucces(typeRdv === "examen" ? "Rendez-vous d'examen planifié." : "Rendez-vous planifié.");
@@ -143,6 +150,20 @@ export default function AppointmentForm({
       succes={succes}
       onSubmit={soumettre}
     >
+      {/* La convocation se remet au patient au moment de la prise : le lien apparait aussitot. */}
+      {dernierRdv !== null && (
+        <p className="sm:col-span-2 -mt-1">
+          <a
+            href={`/print/convocation/${dernierRdv}`}
+            target="_blank"
+            rel="noopener"
+            className="text-sm font-medium text-primary-700 underline-offset-2 hover:underline"
+          >
+            Imprimer la convocation
+          </a>
+        </p>
+      )}
+
       {/* Deux natures de rendez-vous, un seul formulaire : la consultation vise un medecin,
           l'examen vise le plateau qui realisera une demande deja prescrite. */}
       <div className="sm:col-span-2">

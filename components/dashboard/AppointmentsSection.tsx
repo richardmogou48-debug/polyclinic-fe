@@ -118,6 +118,9 @@ export default function AppointmentsSection({ perspective }: { perspective: Pers
             <th scope="col" className="px-4 py-3 font-medium">{reglages.colonne}</th>
             <th scope="col" className="px-4 py-3 font-medium">Motif</th>
             <th scope="col" className="px-4 py-3 font-medium">Statut</th>
+            <th scope="col" className="px-4 py-3 font-medium">
+              <span className="sr-only">Document</span>
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100">
@@ -145,6 +148,16 @@ export default function AppointmentsSection({ perspective }: { perspective: Pers
                   >
                     {statusLabel(rdv.status)}
                   </span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <a
+                    href={`/print/convocation/${rdv.id}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="text-xs font-medium text-primary-700 underline-offset-2 hover:underline"
+                  >
+                    Convocation
+                  </a>
                 </td>
               </tr>
             );

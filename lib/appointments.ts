@@ -59,6 +59,14 @@ export const fetchAppointmentsByPatient = (patientId: number, token: string) =>
   apiGet<Appointment[]>(`/appointment/getAllByPatient/${patientId}`, token);
 
 /**
+ * Un rendez-vous par son numero, enrichi des noms (patient, medecin) par le backend. Reserve au
+ * personnel de planification : le chemin ne porte pas d'identifiant de patient, le filtre le
+ * refuse donc au role PATIENT — qui passe par ses propres rendez-vous.
+ */
+export const fetchAppointmentDetails = (appointmentId: number, token: string) =>
+  apiGet<Appointment>(`/appointment/get/details/${appointmentId}`, token);
+
+/**
  * Formate un LocalDateTime Java pour l'affichage. Renvoie la valeur brute si elle n'est pas
  * analysable : mieux vaut afficher une date etrange qu'un « Invalid Date » qui masque le probleme.
  */
