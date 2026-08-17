@@ -94,6 +94,13 @@ export default function ProfileSection() {
       <p className="border-t border-neutral-200 px-5 py-3 text-xs text-neutral-500">
         Pour corriger une information, adressez-vous à l&apos;administration.
       </p>
+      {/* Service public sans lien avec le dossier medical : simple raccourci vers /cv. */}
+      <p className="border-t border-neutral-200 px-5 py-3 text-sm">
+        <a href="/cv" className="font-medium text-primary-700 underline-offset-2 hover:underline">
+          Créer ou modifier mon CV
+        </a>
+        <span className="ml-2 text-xs text-neutral-500">— modèles canadien, français et anglais, en PDF.</span>
+      </p>
     </section>
   );
 }
