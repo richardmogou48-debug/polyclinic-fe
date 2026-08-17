@@ -121,6 +121,7 @@ type Enveloppe = { code: string; data: string; updatedAt: string };
 
 const CLE_LOCALE = "polyclinic.cv";
 const CLE_CODE = "polyclinic.cv.code";
+const CLE_EMAIL = "polyclinic.cv.email-associe";
 
 /** Le code de reprise garde par ce navigateur, ou null si aucun CV n'a encore ete sauvegarde. */
 export function lireCodeCv(): string | null {
@@ -218,6 +219,34 @@ export async function enregistrerCvServeur(cv: CvData): Promise<string> {
   return enveloppe.code;
 }
 
+/** Un email a-t-il deja ete associe depuis ce navigateur ? Evite de re-proposer a chaque impression. */
+export function emailDejaAssocie(): boolean {
+  return typeof window !== "undefined" && window.localStorage.getItem(CLE_EMAIL) === "1";
+}
+
+/**
+ * Associe un email au CV (proposition apres impression, jamais exigee). Si le CV n'a encore
+ * jamais ete sauvegarde sur CvMS — impression depuis le seul brouillon local — il est d'abord
+ * cree, sans quoi il n'y aurait aucun document auquel accrocher l'adresse.
+ */
+export async function associerEmailCv(email: string): Promise<void> {
+  let code = lireCodeCv();
+  if (!code) {
+    const local = lireCvLocal();
+    if (!local) {
+      throw new ApiError("Aucun CV à associer : enregistrez d'abord votre CV dans l'éditeur.");
+    }
+    await enregistrerCvServeur(local);
+    code = lireCodeCv();
+  }
+  await requeteCv(`/cv/${code}/email`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim() }),
+  });
+  window.localStorage.setItem(CLE_EMAIL, "1");
+}
+
 /**
  * Droit a l'effacement : retire le CV du serveur, puis oublie le code et le brouillon local.
  * Un code deja inconnu du serveur (404) est traite comme un succes — le but est atteint.
@@ -235,6 +264,7 @@ export async function supprimerCvServeur(): Promise<void> {
   }
   window.localStorage.removeItem(CLE_CODE);
   window.localStorage.removeItem(CLE_LOCALE);
+  window.localStorage.removeItem(CLE_EMAIL);
 }
 
 /**

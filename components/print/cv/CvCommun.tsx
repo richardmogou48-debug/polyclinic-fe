@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import SectionMessage from "@/components/dashboard/SectionMessage";
-import { chargerCvServeur, lireCvLocal, type CvData } from "@/lib/cv";
+import { ApiError } from "@/lib/api";
+import { associerEmailCv, chargerCvServeur, emailDejaAssocie, lireCvLocal, type CvData } from "@/lib/cv";
 import { lignes } from "@/lib/cv";
 
 /**
@@ -76,6 +77,16 @@ export function FeuilleCv({
 }) {
   const largeur = format === "letter" ? "216mm" : "210mm";
   const hauteur = format === "letter" ? "279mm" : "297mm";
+
+  // Apres l'impression (fermeture du dialogue, meme annule — le navigateur ne distingue pas),
+  // on propose d'associer un email au CV et de soutenir le service par un don.
+  const [popup, setPopup] = useState(false);
+  useEffect(() => {
+    const apresImpression = () => setPopup(true);
+    window.addEventListener("afterprint", apresImpression);
+    return () => window.removeEventListener("afterprint", apresImpression);
+  }, []);
+
   return (
     <div style={{ background: "#e9e9e9", minHeight: "100vh", padding: "24px 0" }} className="feuille-hote">
       <style>{`
@@ -114,6 +125,7 @@ export function FeuilleCv({
       <div style={{ display: "grid", gap: 24, justifyContent: "center" }}>
         {Array.isArray(children) ? children : [children]}
       </div>
+      {popup && <PopupApresImpression onFermer={() => setPopup(false)} />}
       <style>{`
         .feuille-cv {
           box-sizing: border-box;
@@ -128,6 +140,152 @@ export function FeuilleCv({
           break-after: page;
         }
       `}</style>
+    </div>
+  );
+}
+
+/**
+ * Propose, apres l'impression, d'associer un email au CV (reprise assistee, contact) et de
+ * soutenir le service par un don Mobile Money. Les deux sont facultatifs et le popup se ferme
+ * d'un clic — c'est une invitation, pas un peage.
+ */
+function PopupApresImpression({ onFermer }: { onFermer: () => void }) {
+  const [email, setEmail] = useState("");
+  const [enCours, setEnCours] = useState(false);
+  const [fait, setFait] = useState(emailDejaAssocie());
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  const soumettre = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErreur(null);
+    setEnCours(true);
+    try {
+      await associerEmailCv(email);
+      setFait(true);
+    } catch (cause) {
+      const attendu = cause instanceof ApiError;
+      if (!attendu) console.error(cause);
+      setErreur(attendu ? cause.message : "Une erreur inattendue est survenue.");
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  const bloc: React.CSSProperties = { borderTop: `1px solid ${FILET_CV}`, paddingTop: 14, marginTop: 14 };
+  const champ: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    border: `1px solid ${FILET_CV}`,
+    borderRadius: 6,
+    padding: "8px 10px",
+    fontSize: 13,
+    fontFamily: "inherit",
+  };
+  const bouton: React.CSSProperties = {
+    background: ROUGE_CV,
+    color: "#ffffff",
+    border: "none",
+    borderRadius: 6,
+    padding: "8px 14px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    fontFamily: "inherit",
+  };
+
+  return (
+    <div
+      className="no-print"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Après l'impression"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 20,
+        background: "rgba(32,30,29,0.55)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          color: ENCRE_CV,
+          borderRadius: 10,
+          maxWidth: 440,
+          width: "100%",
+          padding: "22px 24px",
+          fontFamily: "var(--police-cv), Archivo, system-ui, sans-serif",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div style={{ fontSize: 17, fontWeight: 800 }}>Votre CV est prêt !</div>
+
+        <div style={bloc}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Gardez un fil vers votre CV</div>
+          {fait ? (
+            <p style={{ margin: "6px 0 0", fontSize: 12.5, color: GRIS_TXT }}>
+              Merci ! Une adresse email est associée à votre CV.
+            </p>
+          ) : (
+            <>
+              <p style={{ margin: "6px 0 10px", fontSize: 12.5, color: GRIS_TXT }}>
+                Laissez votre adresse email : elle est rattachée à votre CV et pourra servir à le
+                retrouver si vous égarez votre code de reprise. Facultatif.
+              </p>
+              <form onSubmit={soumettre} style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="email"
+                  required
+                  placeholder="vous@exemple.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={enCours}
+                  style={champ}
+                />
+                <button type="submit" disabled={enCours} style={{ ...bouton, opacity: enCours ? 0.6 : 1 }}>
+                  {enCours ? "…" : "Associer"}
+                </button>
+              </form>
+              {erreur && (
+                <p role="alert" style={{ margin: "8px 0 0", fontSize: 12, color: ROUGE_VIF }}>
+                  {erreur}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        <div style={bloc}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Soutenir ce service</div>
+          <p style={{ margin: "6px 0 8px", fontSize: 12.5, color: GRIS_TXT }}>
+            Ce générateur de CV est gratuit. Si vous souhaitez soutenir son développement, un don
+            Mobile Money est le bienvenu :
+          </p>
+          <div style={{ fontSize: 13, display: "grid", gap: 4 }}>
+            <div>
+              <span style={{ fontWeight: 600 }}>MTN MoMo :</span> +237 673 31 10 16
+            </div>
+            <div>
+              <span style={{ fontWeight: 600 }}>Orange Money :</span> +237 698 13 25 63
+            </div>
+            <div style={{ fontSize: 12, color: GRIS_CV }}>Bénéficiaire : MOGOU RICHARD</div>
+          </div>
+        </div>
+
+        <div style={{ ...bloc, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={onFermer}
+            style={{ ...bouton, background: "#ffffff", color: GRIS_TXT, border: `1px solid ${FILET_CV}` }}
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
